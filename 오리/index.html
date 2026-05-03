@@ -189,6 +189,21 @@
     .mini-box .lbl { font-size: 13px; opacity: 0.55; }
     .mini-box .val { font-size: 20px; font-weight: bold; color: #60a5fa; }
 
+    .dday-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .dday-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .dday-row:first-child { padding-top: 0; }
+    .dday-label { font-size: 12px; opacity: 0.7; line-height: 1.4; }
+    .dday-label span { display: block; font-size: 11px; opacity: 0.5; margin-top: 2px; }
+    .dday-num { font-size: 20px; font-weight: bold; color: #f472b6; white-space: nowrap; }
+    .dday-num.soon { color: #fb923c; }
+    .dday-num.passed { color: rgba(255,255,255,0.3); font-size: 14px; }
+
     @media (max-width: 820px) {
       .layout { flex-direction: column; align-items: center; }
       .grid { width: 100%; max-width: 520px; }
@@ -249,6 +264,13 @@
 
     <!-- 보조: 통계 패널 -->
     <div class="stats">
+      <div class="stats-title">시험 일정</div>
+
+      <div class="stat-card" id="ddayCard">
+        <h4>다음 시험까지</h4>
+        <div id="ddayList"></div>
+      </div>
+
       <div class="stats-title">시험 통계</div>
 
       <div class="stat-card">
@@ -322,5 +344,40 @@
     </div>
 
   </div>
+<script>
+  const exams = [
+    { label: '필기 1회', date: '2026-03-07' },
+    { label: '필기 2회', date: '2026-05-09' },
+    { label: '실기 1회', date: '2026-07-19' },
+    { label: '필기 3회', date: '2026-08-22' },
+    { label: '실기 2회', date: '2026-10-17' },
+  ];
+
+  function calcDday(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr);
+    return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+  }
+
+  const list = document.getElementById('ddayList');
+  exams.forEach(({ label, date }) => {
+    const d = calcDday(date);
+    const row = document.createElement('div');
+    row.className = 'dday-row';
+
+    let cls = '', text = '';
+    if (d < 0)       { cls = 'passed'; text = '종료'; }
+    else if (d === 0){ cls = 'soon';   text = 'D-DAY'; }
+    else if (d <= 14){ cls = 'soon';   text = `D-${d}`; }
+    else             { cls = '';       text = `D-${d}`; }
+
+    row.innerHTML = `
+      <div class="dday-label">${label}<span>${date}</span></div>
+      <div class="dday-num ${cls}">${text}</div>
+    `;
+    list.appendChild(row);
+  });
+</script>
 </body>
 </html>
