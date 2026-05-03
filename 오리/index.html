@@ -28,11 +28,10 @@
     header p { font-size: 14px; opacity: 0.75; }
 
     .layout {
-      display: flex;
-      gap: 32px;
-      max-width: 1020px;
+      position: relative;
       width: 100%;
-      align-items: flex-start;
+      max-width: 1200px;
+      display: flex;
       justify-content: center;
     }
 
@@ -95,8 +94,10 @@
 
     /* ── 오른쪽: 보조 통계 패널 ── */
     .stats {
+      position: absolute;
+      right: 0;
+      top: 0;
       width: 220px;
-      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       gap: 14px;
