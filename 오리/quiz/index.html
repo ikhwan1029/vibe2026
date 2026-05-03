@@ -200,7 +200,10 @@
     <h1>❄️ 공조냉동기계기사 퀴즈</h1>
     <button class="dark-toggle" id="themeBtn" onclick="toggleTheme()">🌙</button>
   </div>
-  <p class="subtitle">100문제 풀 · 매회 랜덤 10문제 · 분야별 출제</p>
+  <p class="subtitle" id="subtitle">100문제 풀 · 매회 랜덤 10문제 · 분야별 출제</p>
+  <div style="text-align:center;margin-bottom:8px;">
+    <a href="../" style="font-size:13px;color:var(--subtext);text-decoration:none;">← 분야 선택으로 돌아가기</a>
+  </div>
 
   <div id="quizArea">
     <div class="badge" id="categoryBadge"></div>
@@ -345,6 +348,23 @@ const allQuestions = [
   { cat:"전기 및 제어", q:"냉동장치 운전 중 압축기가 갑자기 정지하는 원인으로 가장 거리가 먼 것은?", options:["고압차단스위치 작동","과부하 계전기 작동","저압차단스위치 작동","응축기 팬 속도 증가"], answer:3, explanation:"압축기 정지 원인: 고압/저압 차단, 과부하, 유압 차단 등. 응축기 팬 속도 증가는 오히려 정상 운전에 도움을 줍니다." }
 ];
 
+const catMap = {
+  "냉동공학 기초": "에너지관리",
+  "냉매": "공조냉동설계",
+  "공기조화": "공조냉동설계",
+  "냉동장치 및 부속기기": "유지보수 공사관리",
+  "배관 및 안전": "시운전 및 안전관리",
+  "전기 및 제어": "시운전 및 안전관리"
+};
+
+const urlCat = new URLSearchParams(window.location.search).get('cat');
+
+if (urlCat) {
+  document.getElementById('subtitle').textContent = `[${urlCat}] · 매회 랜덤 10문제`;
+  document.title = `${urlCat} - 공조냉동기계기사 퀴즈`;
+  document.querySelector('h1').textContent = `❄️ ${urlCat}`;
+}
+
 const QUIZ_COUNT = 10;
 let questions = [];
 let current = 0;
@@ -361,14 +381,20 @@ function shuffle(arr) {
 }
 
 function initQuiz() {
-  const cats = [...new Set(allQuestions.map(q => q.cat))];
+  const pool = urlCat
+    ? allQuestions.filter(q => catMap[q.cat] === urlCat)
+    : allQuestions;
+
+  const subcats = [...new Set(pool.map(q => q.cat))];
   const selected = [];
-  const shuffledAll = shuffle(allQuestions);
-  cats.forEach(cat => {
-    const catQs = shuffledAll.filter(q => q.cat === cat);
-    selected.push(catQs[0]);
+  const shuffledPool = shuffle(pool);
+
+  subcats.forEach(cat => {
+    const catQs = shuffledPool.filter(q => q.cat === cat);
+    if (catQs.length > 0) selected.push(catQs[0]);
   });
-  const remaining = shuffle(shuffledAll.filter(q => !selected.includes(q)));
+
+  const remaining = shuffle(shuffledPool.filter(q => !selected.includes(q)));
   let i = 0;
   while (selected.length < QUIZ_COUNT && i < remaining.length) {
     selected.push(remaining[i++]);
