@@ -36,9 +36,9 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 20px;
-      max-width: 900px;
+      max-width: 600px;
       width: 100%;
     }
 
@@ -87,10 +87,17 @@
       border-radius: 999px;
     }
 
+    .card {
+      aspect-ratio: 1 / 1;
+      justify-content: center;
+    }
+
     .card-all {
       background: linear-gradient(135deg, #1e40af, #0891b2);
       color: white;
       grid-column: 1 / -1;
+      aspect-ratio: auto;
+      padding: 24px;
     }
 
     .card-all h2,
