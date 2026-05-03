@@ -200,7 +200,9 @@
     .dday-row:first-child { padding-top: 0; }
     .dday-label { font-size: 12px; opacity: 0.7; line-height: 1.4; }
     .dday-label span { display: block; font-size: 11px; opacity: 0.5; margin-top: 2px; }
+    .dday-row.highlight { background: rgba(251,191,36,0.08); border-radius: 10px; padding: 10px 8px; margin: 0 -8px; }
     .dday-num { font-size: 20px; font-weight: bold; color: #f472b6; white-space: nowrap; }
+    .dday-num.mine { font-size: 24px; color: #fbbf24; }
     .dday-num.soon { color: #fb923c; }
     .dday-num.passed { color: rgba(255,255,255,0.3); font-size: 14px; }
 
@@ -346,6 +348,7 @@
   </div>
 <script>
   const exams = [
+    { label: '⭐ 내 시험', date: '2026-05-17', mine: true },
     { label: '필기 1회', date: '2026-03-07' },
     { label: '필기 2회', date: '2026-05-09' },
     { label: '실기 1회', date: '2026-07-19' },
@@ -361,14 +364,15 @@
   }
 
   const list = document.getElementById('ddayList');
-  exams.forEach(({ label, date }) => {
+  exams.forEach(({ label, date, mine }) => {
     const d = calcDday(date);
     const row = document.createElement('div');
-    row.className = 'dday-row';
+    row.className = mine ? 'dday-row highlight' : 'dday-row';
 
     let cls = '', text = '';
     if (d < 0)       { cls = 'passed'; text = '종료'; }
     else if (d === 0){ cls = 'soon';   text = 'D-DAY'; }
+    else if (mine)   { cls = 'mine';   text = `D-${d}`; }
     else if (d <= 14){ cls = 'soon';   text = `D-${d}`; }
     else             { cls = '';       text = `D-${d}`; }
 
