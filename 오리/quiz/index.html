@@ -381,9 +381,16 @@ function shuffle(arr) {
 }
 
 function initQuiz() {
-  const pool = urlCat
-    ? allQuestions.filter(q => catMap[q.cat] === urlCat)
-    : allQuestions;
+  let pool;
+  if (!urlCat) {
+    pool = allQuestions;
+  } else if (urlCat === '공조냉동설계') {
+    const 냉매Qs = shuffle(allQuestions.filter(q => q.cat === '냉매')).slice(0, 10);
+    const 공기조화Qs = shuffle(allQuestions.filter(q => q.cat === '공기조화')).slice(0, 10);
+    pool = [...냉매Qs, ...공기조화Qs];
+  } else {
+    pool = allQuestions.filter(q => catMap[q.cat] === urlCat);
+  }
 
   const subcats = [...new Set(pool.map(q => q.cat))];
   const selected = [];
