@@ -684,7 +684,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.31</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.32</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -863,7 +863,7 @@
       <div class="or-row">또는 직접 입력</div>
 
       <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-        <button class="btn btn-sm" onclick="cleanIngInput()" style="font-size:12px;padding:5px 11px;color:var(--muted);">✨ 텍스트 정리</button>
+        <button id="cleanBtn" class="btn btn-sm" onclick="cleanIngInput()" style="font-size:12px;padding:5px 11px;color:var(--muted);">✨ 텍스트 정리</button>
       </div>
       <textarea id="ingInput" placeholder="식품 포장지의 원재료명을 여기에 붙여넣어 주세요.&#10;&#10;예) 밀가루, 설탕, 전지분유, 대두유, 계란, 코코아분말, 식품첨가물..."></textarea>
       <div id="ocrEditHint" class="ocr-edit-hint" style="display:none">
@@ -1306,11 +1306,19 @@ function normalizeIngText(raw) {
 
 function cleanIngInput() {
   var el = document.getElementById('ingInput');
-  var cleaned = normalizeIngText(el.value);
-  if (cleaned === el.value.trim()) return;
+  if (!el.value.trim()) return;
+  var before  = el.value;
+  var cleaned = normalizeIngText(before);
   el.value = cleaned;
-  el.style.borderColor = 'var(--safe)';
-  setTimeout(function() { el.style.borderColor = ''; }, 800);
+  var changed = cleaned !== before;
+  el.style.borderColor = changed ? 'var(--safe)' : '#a5b4fc';
+  var btn = document.getElementById('cleanBtn');
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = changed ? '✅ 정리됨!' : '✨ 이미 깔끔해요';
+    setTimeout(function() { btn.textContent = orig; }, 1100);
+  }
+  setTimeout(function() { el.style.borderColor = ''; }, 900);
 }
 
 function clearOcrEditMode() {
