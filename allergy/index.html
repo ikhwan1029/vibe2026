@@ -192,17 +192,31 @@
     }
     .btn-camera:active { background: #e0f2fe; }
 
-    .ocr-preview-wrap {
-      border-radius: 13px; overflow: hidden;
-      border: 1.5px solid var(--border); margin-bottom: 4px;
+    /* Crop tool */
+    .crop-hint {
+      font-size: 12px; color: #0284c7; font-weight: 600;
+      text-align: center; padding: 8px 0 6px;
+      background: #f0f9ff; border-radius: 10px 10px 0 0;
     }
-    .ocr-preview-wrap img {
-      width: 100%; max-height: 180px; object-fit: cover; display: block;
+    #cropCanvas {
+      display: block; width: 100%; cursor: crosshair;
+      touch-action: none; border-radius: 0;
     }
-    .ocr-status-bar { padding: 10px 12px; background: #f8fafc; }
+    .crop-btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .crop-btn-row .btn { flex: 1; }
+    .btn-crop-confirm { background: var(--primary); color: #fff; }
+    .btn-crop-all     { background: #f1f5f9; color: var(--muted); border: 1.5px solid var(--border); }
+
+    /* Status bar */
+    .ocr-status-bar { padding: 10px 12px; background: #f8fafc; border-radius: 0 0 12px 12px; }
     .ocr-status-text { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
     .ocr-bar-bg { height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
     .ocr-bar-fill { height: 100%; width: 0%; border-radius: 99px; background: var(--primary); transition: width 0.4s; }
+
+    .ocr-wrap {
+      border: 1.5px solid var(--border); border-radius: 13px;
+      overflow: hidden; margin-bottom: 4px;
+    }
 
     .or-row {
       display: flex; align-items: center; gap: 8px;
@@ -344,15 +358,25 @@
         📷 카메라로 성분표 스캔하기
       </button>
 
-      <!-- OCR preview + progress -->
-      <div id="ocrPreviewWrap" class="ocr-preview-wrap" style="display:none">
-        <img id="ocrImg" src="" alt="스캔 이미지" />
-        <div class="ocr-status-bar">
-          <div id="ocrStatusText" class="ocr-status-text">준비 중...</div>
-          <div class="ocr-bar-bg">
-            <div id="ocrBarFill" class="ocr-bar-fill"></div>
+      <!-- OCR wrap -->
+      <div id="ocrPreviewWrap" class="ocr-wrap" style="display:none">
+
+        <!-- Crop tool -->
+        <div id="cropArea">
+          <div class="crop-hint">📌 성분표 부분을 손가락으로 드래그해서 선택하세요</div>
+          <canvas id="cropCanvas"></canvas>
+          <div class="crop-btn-row" style="padding:8px">
+            <button class="btn btn-sm btn-crop-confirm" onclick="confirmCrop()">✅ 선택 영역만 인식</button>
+            <button class="btn btn-sm btn-crop-all" onclick="runOCRFull()">전체 인식</button>
           </div>
         </div>
+
+        <!-- Progress bar (shown while OCR runs) -->
+        <div id="ocrStatusArea" class="ocr-status-bar" style="display:none">
+          <div id="ocrStatusText" class="ocr-status-text">준비 중...</div>
+          <div class="ocr-bar-bg"><div id="ocrBarFill" class="ocr-bar-fill"></div></div>
+        </div>
+
       </div>
 
       <div class="or-row">또는 직접 입력</div>
@@ -672,109 +696,195 @@ function esc(s) {
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
 // ══ Camera / OCR ══════════════════════════════════════════
-function openCamera() {
-  document.getElementById('cameraInput').click();
-}
+// ══ Camera ════════════════════════════════════════════════
+function openCamera() { document.getElementById('cameraInput').click(); }
 
-// 이미지 전처리: 그레이스케일 + 대비 강화 → OCR 정확도 향상
-function preprocessForOCR(file, cb) {
-  var img = new Image();
-  var url = URL.createObjectURL(file);
-  img.onload = function() {
-    var maxSide = Math.max(img.width, img.height);
-    var scale   = maxSide < 1600 ? Math.min(3, 1600 / maxSide) : 1;
-    var canvas  = document.createElement('canvas');
-    canvas.width  = Math.round(img.width  * scale);
-    canvas.height = Math.round(img.height * scale);
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    var id = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var d  = id.data;
-    for (var i = 0; i < d.length; i += 4) {
-      // 그레이스케일
-      var g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-      // 대비 1.7배 강화
-      g = Math.min(255, Math.max(0, (g - 128) * 1.7 + 128));
-      d[i] = d[i+1] = d[i+2] = g;
-    }
-    ctx.putImageData(id, 0, 0);
-    URL.revokeObjectURL(url);
-    cb(canvas);
-  };
-  img.src = url;
-}
-
-// OCR 결과 정제: 노이즈 줄바꿈 제거, 이상한 기호 정리
-function cleanOCRText(raw) {
-  return raw
-    .replace(/\r/g, '')
-    // 각 줄을 다듬고 1글자짜리 노이즈 줄 제거
-    .split('\n')
-    .map(function(l) { return l.trim(); })
-    .filter(function(l) { return l.length >= 2; })
-    // 짧은 줄(3자 이하)은 앞 줄과 붙이기 (OCR이 단어 중간에 줄바꿈하는 경우)
-    .reduce(function(acc, line) {
-      if (acc.length === 0) { acc.push(line); return acc; }
-      var prev = acc[acc.length - 1];
-      // 이전 줄이 구두점으로 끝나거나 현재 줄이 충분히 길면 새 줄로
-      if (/[,，.。\)）]$/.test(prev) || line.length > 3) {
-        acc.push(line);
-      } else {
-        acc[acc.length - 1] = prev + line;
-      }
-      return acc;
-    }, [])
-    .join(' ')
-    // 불필요한 기호 정리 (| l 등 OCR 오인식)
-    .replace(/\|/g, '')
-    .replace(/ {2,}/g, ' ')
-    .trim();
-}
+// ══ Crop tool state ════════════════════════════════════════
+var _cImg = null;      // full-res Image object
+var _cScale = 1;       // display canvas → image scale
+var _cRect = null;     // selected rect in canvas coords {x,y,w,h}
+var _cDrag = false;
+var _cStart = { x: 0, y: 0 };
+var _cCanvas = null;
+var _cCtx = null;
 
 document.getElementById('cameraInput').addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (!file) return;
   e.target.value = '';
 
-  // 미리보기 표시
-  var previewUrl = URL.createObjectURL(file);
   var wrap = document.getElementById('ocrPreviewWrap');
-  document.getElementById('ocrImg').src = previewUrl;
   wrap.style.display = 'block';
+  document.getElementById('cropArea').style.display = 'block';
+  document.getElementById('ocrStatusArea').style.display = 'none';
   wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  _cCanvas = document.getElementById('cropCanvas');
+  _cCtx    = _cCanvas.getContext('2d');
+  _cImg    = new Image();
+  var url  = URL.createObjectURL(file);
+
+  _cImg.onload = function() {
+    // Scale image to fit card width (max 440px wide, 300px tall)
+    var maxW = Math.min(wrap.offsetWidth || 400, 440);
+    var maxH = 320;
+    _cScale = Math.min(maxW / _cImg.width, maxH / _cImg.height);
+    _cCanvas.width  = Math.round(_cImg.width  * _cScale);
+    _cCanvas.height = Math.round(_cImg.height * _cScale);
+    _cRect = null;
+    drawCrop();
+    URL.revokeObjectURL(url);
+  };
+  _cImg.src = url;
+
+  // Mouse events
+  _cCanvas.onmousedown = function(e) { cropDragStart(canvasPos(e)); };
+  _cCanvas.onmousemove = function(e) { if (_cDrag) { cropDragMove(canvasPos(e)); } };
+  _cCanvas.onmouseup   = function()  { cropDragEnd(); };
+
+  // Touch events
+  _cCanvas.ontouchstart = function(e) { e.preventDefault(); cropDragStart(canvasPos(e.touches[0])); };
+  _cCanvas.ontouchmove  = function(e) { e.preventDefault(); if (_cDrag) cropDragMove(canvasPos(e.touches[0])); };
+  _cCanvas.ontouchend   = function(e) { e.preventDefault(); cropDragEnd(); };
+});
+
+function canvasPos(e) {
+  var r  = _cCanvas.getBoundingClientRect();
+  var sx = _cCanvas.width  / r.width;
+  var sy = _cCanvas.height / r.height;
+  return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
+}
+
+function cropDragStart(p) {
+  _cDrag  = true;
+  _cStart = p;
+  _cRect  = { x: p.x, y: p.y, w: 0, h: 0 };
+}
+function cropDragMove(p) {
+  _cRect = {
+    x: Math.min(p.x, _cStart.x), y: Math.min(p.y, _cStart.y),
+    w: Math.abs(p.x - _cStart.x), h: Math.abs(p.y - _cStart.y)
+  };
+  drawCrop();
+}
+function cropDragEnd() {
+  _cDrag = false;
+  if (_cRect && (_cRect.w < 20 || _cRect.h < 10)) _cRect = null;
+  drawCrop();
+}
+
+function drawCrop() {
+  if (!_cCtx || !_cImg) return;
+  _cCtx.drawImage(_cImg, 0, 0, _cCanvas.width, _cCanvas.height);
+  if (_cRect && _cRect.w > 0 && _cRect.h > 0) {
+    // dim outside
+    _cCtx.fillStyle = 'rgba(0,0,0,0.55)';
+    _cCtx.fillRect(0, 0, _cCanvas.width, _cCanvas.height);
+    // restore selected area from image
+    _cCtx.drawImage(_cImg,
+      _cRect.x / _cScale, _cRect.y / _cScale,
+      _cRect.w / _cScale, _cRect.h / _cScale,
+      _cRect.x, _cRect.y, _cRect.w, _cRect.h);
+    // selection border
+    _cCtx.strokeStyle = '#0ea5e9';
+    _cCtx.lineWidth   = 2.5;
+    _cCtx.setLineDash([6, 3]);
+    _cCtx.strokeRect(_cRect.x + 1, _cRect.y + 1, _cRect.w - 2, _cRect.h - 2);
+    _cCtx.setLineDash([]);
+    // corner handles
+    var corners = [
+      [_cRect.x, _cRect.y], [_cRect.x + _cRect.w, _cRect.y],
+      [_cRect.x, _cRect.y + _cRect.h], [_cRect.x + _cRect.w, _cRect.y + _cRect.h]
+    ];
+    _cCtx.fillStyle = '#fff';
+    corners.forEach(function(c) {
+      _cCtx.beginPath(); _cCtx.arc(c[0], c[1], 5, 0, Math.PI * 2); _cCtx.fill();
+      _cCtx.beginPath(); _cCtx.arc(c[0], c[1], 5, 0, Math.PI * 2); _cCtx.stroke();
+    });
+  }
+}
+
+function confirmCrop() {
+  if (!_cRect || _cRect.w < 20 || _cRect.h < 10) { runOCRFull(); return; }
+  // Extract crop from full-res image
+  var ex  = document.createElement('canvas');
+  ex.width  = Math.max(1, Math.round(_cRect.w / _cScale));
+  ex.height = Math.max(1, Math.round(_cRect.h / _cScale));
+  ex.getContext('2d').drawImage(_cImg,
+    _cRect.x / _cScale, _cRect.y / _cScale, ex.width, ex.height,
+    0, 0, ex.width, ex.height);
+  startOCR(ex);
+}
+
+function runOCRFull() {
+  var ex = document.createElement('canvas');
+  ex.width  = _cImg.naturalWidth;
+  ex.height = _cImg.naturalHeight;
+  ex.getContext('2d').drawImage(_cImg, 0, 0);
+  startOCR(ex);
+}
+
+function startOCR(srcCanvas) {
+  document.getElementById('cropArea').style.display = 'none';
+  document.getElementById('ocrStatusArea').style.display = 'block';
   setOcrStatus('🖼️ 이미지 전처리 중...', 5, 'var(--primary)');
 
-  // 이미지 전처리 후 OCR 실행
-  preprocessForOCR(file, function(canvas) {
-    setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 시간이 걸려요)', 10, 'var(--primary)');
+  // Grayscale + contrast on a new canvas
+  var canvas = document.createElement('canvas');
+  var maxSide = Math.max(srcCanvas.width, srcCanvas.height);
+  var scale   = maxSide < 1600 ? Math.min(3, 1600 / maxSide) : 1;
+  canvas.width  = Math.round(srcCanvas.width  * scale);
+  canvas.height = Math.round(srcCanvas.height * scale);
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(srcCanvas, 0, 0, canvas.width, canvas.height);
+  var id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  var d  = id.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+    g = Math.min(255, Math.max(0, (g - 128) * 1.7 + 128));
+    d[i] = d[i+1] = d[i+2] = g;
+  }
+  ctx.putImageData(id, 0, 0);
 
-    Tesseract.recognize(canvas, 'kor+eng', {
-      logger: function(m) {
-        if (m.status === 'loading tesseract core') {
-          setOcrStatus('📦 OCR 엔진 로딩 중...', 15, 'var(--primary)');
-        } else if (m.status === 'initializing tesseract') {
-          setOcrStatus('⚙️ OCR 초기화 중...', 25, 'var(--primary)');
-        } else if (m.status === 'loading language traineddata') {
-          setOcrStatus('📥 한국어 데이터 로딩 중...', 35, 'var(--primary)');
-        } else if (m.status === 'initializing api') {
-          setOcrStatus('🔧 분석 준비 중...', 50, 'var(--primary)');
-        } else if (m.status === 'recognizing text') {
-          var pct = Math.round(50 + m.progress * 48);
-          setOcrStatus('🔍 텍스트 인식 중... ' + pct + '%', pct, 'var(--primary)');
-        }
+  setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 시간이 걸려요)', 10, 'var(--primary)');
+  Tesseract.recognize(canvas, 'kor+eng', {
+    logger: function(m) {
+      if      (m.status === 'loading tesseract core')    setOcrStatus('📦 OCR 엔진 로딩 중...', 15, 'var(--primary)');
+      else if (m.status === 'initializing tesseract')    setOcrStatus('⚙️ OCR 초기화 중...', 25, 'var(--primary)');
+      else if (m.status === 'loading language traineddata') setOcrStatus('📥 한국어 데이터 로딩 중...', 35, 'var(--primary)');
+      else if (m.status === 'initializing api')          setOcrStatus('🔧 분석 준비 중...', 50, 'var(--primary)');
+      else if (m.status === 'recognizing text') {
+        var pct = Math.round(50 + m.progress * 48);
+        setOcrStatus('🔍 텍스트 인식 중... ' + pct + '%', pct, 'var(--primary)');
       }
-    }).then(function(result) {
-      var cleaned = cleanOCRText(result.data.text);
-      document.getElementById('ingInput').value = cleaned;
-      setOcrStatus('✅ 인식 완료! 내용을 확인 후 성분 확인하기를 눌러주세요.', 100, 'var(--safe)');
-      document.getElementById('ingInput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }).catch(function(err) {
-      console.error(err);
-      setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
-    });
+    }
+  }).then(function(result) {
+    document.getElementById('ingInput').value = cleanOCRText(result.data.text);
+    setOcrStatus('✅ 인식 완료! 내용을 확인 후 성분 확인하기를 눌러주세요.', 100, 'var(--safe)');
+    document.getElementById('ingInput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }).catch(function(err) {
+    console.error(err);
+    setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
   });
-});
+}
+
+// OCR 결과 정제
+function cleanOCRText(raw) {
+  return raw
+    .replace(/\r/g, '')
+    .split('\n')
+    .map(function(l) { return l.trim(); })
+    .filter(function(l) { return l.length >= 2; })
+    .reduce(function(acc, line) {
+      if (!acc.length) { acc.push(line); return acc; }
+      var prev = acc[acc.length - 1];
+      if (/[,，.。\)）]$/.test(prev) || line.length > 4) acc.push(line);
+      else acc[acc.length - 1] = prev + line;
+      return acc;
+    }, [])
+    .join(' ')
+    .replace(/\|/g, '').replace(/ {2,}/g, ' ').trim();
+}
 
 function setOcrStatus(msg, pct, color) {
   document.getElementById('ocrStatusText').textContent = msg;
