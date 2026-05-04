@@ -412,14 +412,35 @@
       border-radius: 999px; padding: 4px 13px;
       font-size: 13px; font-weight: 800; margin-bottom: 10px;
     }
-    .alt-list { display: flex; flex-direction: column; gap: 8px; }
+    .alt-list { display: flex; flex-direction: column; gap: 10px; }
     .alt-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      background: #f8fafc; border-radius: 11px; padding: 10px 12px;
+      display: flex; align-items: flex-start; gap: 11px;
+      background: #f8fafc; border-radius: 13px; padding: 12px 13px;
+      border: 1.5px solid var(--border);
     }
-    .alt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
-    .alt-name { font-size: 14px; font-weight: 700; color: var(--text); }
-    .alt-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .alt-item.alt-best { background: #f0fdf4; border-color: #86efac; }
+    .alt-item.alt-good { background: #eff6ff; border-color: #93c5fd; }
+    .alt-icon { font-size: 26px; flex-shrink: 0; margin-top: 1px; }
+    .alt-body { flex: 1; min-width: 0; }
+    .alt-top-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
+    .alt-name { font-size: 14px; font-weight: 800; color: var(--text); }
+    .alt-badge {
+      font-size: 10px; font-weight: 800; padding: 2px 8px;
+      border-radius: 999px; flex-shrink: 0; letter-spacing: 0.3px;
+    }
+    .alt-badge.best { background: #d1fae5; color: #065f46; }
+    .alt-badge.good { background: #dbeafe; color: #1d4ed8; }
+    .alt-badge.ok   { background: #f1f5f9; color: #475569; }
+    .alt-ratio {
+      font-size: 11px; font-weight: 700; color: #0284c7;
+      background: #e0f2fe; border-radius: 6px; padding: 2px 7px; white-space: nowrap;
+    }
+    .alt-desc { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+    .alt-tip {
+      font-size: 11px; color: #16a34a; font-weight: 600;
+      margin-top: 5px; background: #f0fdf4; border-radius: 7px;
+      padding: 4px 8px; display: inline-block; line-height: 1.4;
+    }
 
     /* ── 보호자 공유 ── */
     .btn-share {
@@ -507,6 +528,9 @@
     body.easy-mode .rec-badge { font-size: 13px; padding: 4px 13px; }
     body.easy-mode .alt-name { font-size: 17px; }
     body.easy-mode .alt-desc { font-size: 14px; }
+    body.easy-mode .alt-badge { font-size: 12px; padding: 3px 10px; }
+    body.easy-mode .alt-ratio { font-size: 13px; }
+    body.easy-mode .alt-tip   { font-size: 13px; }
     body.easy-mode .syns-items { font-size: 15px; }
     body.easy-mode .medical-note { font-size: 14px; }
     body.easy-mode .info-banner { font-size: 15px; }
@@ -538,7 +562,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.20</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.21</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -823,122 +847,121 @@ var PRESETS = Object.keys(ADATA);
 // ══ Alternative food data ══════════════════════════════════
 var ALT = {
   '우유': [
-    { icon:'🥛', name:'두유',              desc:'단백질 풍부, 가장 무난한 대체품' },
-    { icon:'🌾', name:'귀리음료 (오트밀크)', desc:'담백하고 고소, 카페에도 많음' },
-    { icon:'🌰', name:'아몬드밀크',         desc:'저칼로리, 단맛이 적음' },
-    { icon:'🥥', name:'코코넛밀크',         desc:'풍미 강함, 요리에 좋음' },
-    { icon:'🍚', name:'쌀음료',             desc:'가장 순한 맛, 아이에게도 적합' },
+    { icon:'🥛', name:'두유', badge:'best', ratio:'1:1', desc:'단백질·칼슘 모두 비슷, 가장 무난하게 바꿀 수 있어요', tip:'☕ 카페에서 "두유로 변경" 요청하면 대부분 가능해요' },
+    { icon:'🌾', name:'귀리음료 (오트밀크)', badge:'best', ratio:'1:1', desc:'부드럽고 고소해서 커피·시리얼에 잘 어울려요', tip:'🧋 스타벅스 등 대형 카페에서 귀리음료 옵션이 있어요' },
+    { icon:'🌰', name:'아몬드밀크', badge:'good', ratio:'1:1', desc:'칼로리가 낮고 담백해요. 단백질은 낮은 편', tip:'🥣 시리얼·스무디에 넣으면 잘 어울려요' },
+    { icon:'🥥', name:'코코넛밀크', badge:'good', ratio:'1:1', desc:'풍미가 진해서 카레·수프 같은 요리에 좋아요', tip:'🍛 동남아 요리 레시피에서 우유 대신 자주 써요' },
+    { icon:'🍚', name:'쌀음료', badge:'ok', ratio:'1:1', desc:'가장 순한 맛이라 아이나 노인에게 적합해요', tip:'👶 알레르기 걱정이 많을 때 가장 안전한 선택이에요' },
   ],
   '계란': [
-    { icon:'🌿', name:'아마씨 + 물 (1:3)', desc:'베이킹 결합제, 구수한 맛' },
-    { icon:'🌿', name:'치아씨드 + 물 (1:3)', desc:'베이킹에 사용, 영양 풍부' },
-    { icon:'🫘', name:'아쿠아파바 (병아리콩 삶은 물)', desc:'머랭·마요네즈 대체 가능' },
-    { icon:'🍌', name:'바나나 (½개 = 계란 1개)', desc:'베이킹에, 단맛이 더해짐' },
-    { icon:'🧇', name:'두부 (연두부)',       desc:'스크램블·결합제로 활용' },
+    { icon:'🌿', name:'아마씨 가루 + 물', badge:'best', ratio:'1T+3T = 계란 1개', desc:'베이킹에서 결합제 역할, 구수한 맛이 더해져요', tip:'💡 15분 불려두면 젤처럼 돼서 반죽에 잘 섞여요' },
+    { icon:'🫘', name:'아쿠아파바 (병아리콩 물)', badge:'best', ratio:'3T = 계란 1개', desc:'머랭, 마요네즈, 무스 대체에 탁월해요', tip:'🥫 통조림 병아리콩 캔 따고 남은 물을 바로 쓰면 돼요' },
+    { icon:'🍌', name:'으깬 바나나', badge:'good', ratio:'½개 = 계란 1개', desc:'머핀·팬케이크에 촉촉함과 달콤함을 동시에', tip:'🍌 잘 익은(검은 점이 생긴) 바나나일수록 잘 결합돼요' },
+    { icon:'🌿', name:'치아씨드 + 물', badge:'good', ratio:'1T+3T = 계란 1개', desc:'영양이 풍부하고 식감이 씹히는 맛이 생겨요', tip:'💧 물에 10분 불리면 끈적한 젤 상태가 돼요' },
+    { icon:'🧇', name:'연두부', badge:'ok', ratio:'¼컵 = 계란 1개', desc:'스크램블, 퀴시, 결합제로 활용할 수 있어요', tip:'🍳 대두 알레르기가 없을 때만 사용 가능해요' },
   ],
   '밀': [
-    { icon:'🍚', name:'쌀가루',    desc:'가장 가까운 식감, 구하기 쉬움' },
-    { icon:'🌿', name:'메밀가루',  desc:'구수한 풍미, 국수·팬케이크에' },
-    { icon:'🌾', name:'귀리가루',  desc:'고소하고 쫄깃, 쿠키·빵에 적합' },
-    { icon:'🌰', name:'아몬드가루', desc:'촉촉한 식감, 저탄수화물' },
-    { icon:'🥥', name:'타피오카가루', desc:'쫄깃한 식감이 필요할 때' },
+    { icon:'🍚', name:'쌀가루', badge:'best', ratio:'1:1', desc:'가장 가까운 식감, 한국에서 구하기 쉬워요', tip:'🎂 "글루텐 프리 인증" 쌀가루를 고르면 교차오염도 방지해요' },
+    { icon:'🌾', name:'귀리가루 (오트 플라워)', badge:'best', ratio:'1:1', desc:'고소하고 쫄깃, 쿠키·팬케이크에 특히 잘 맞아요', tip:'⚠️ 귀리 자체는 글루텐 프리지만 공장 교차오염 주의 필요' },
+    { icon:'🌰', name:'아몬드가루', badge:'good', ratio:'1:1', desc:'촉촉하고 고소한 식감, 저탄수화물 베이킹에', tip:'🍪 수분이 많아지므로 달걀 양을 약간 줄이세요' },
+    { icon:'🥥', name:'타피오카가루', badge:'good', ratio:'쌀가루 70%+타피오카 30%', desc:'쫄깃하고 투명한 식감이 필요할 때', tip:'🫔 쌀가루와 섞으면 더 좋은 결과를 얻어요' },
+    { icon:'🌿', name:'메밀가루', badge:'ok', ratio:'1:1', desc:'구수한 풍미, 국수·부침개·팬케이크에 좋아요', tip:'⚠️ 메밀 알레르기가 있다면 사용 불가예요' },
   ],
   '땅콩': [
-    { icon:'🌻', name:'해바라기씨버터', desc:'고소하고 진한 맛, 가장 유사' },
-    { icon:'🌰', name:'아몬드버터',     desc:'부드럽고 고소, 구하기 쉬움' },
-    { icon:'🌿', name:'타히니 (참깨페이스트)', desc:'고소하고 고단백' },
-    { icon:'🎃', name:'호박씨버터',     desc:'견과류 알레르기 없을 때 적합' },
+    { icon:'🌻', name:'해바라기씨버터', badge:'best', ratio:'1:1', desc:'고소하고 진한 맛이 땅콩버터와 가장 유사해요', tip:'🥪 마트 견과류 코너나 온라인에서 쉽게 구할 수 있어요' },
+    { icon:'🌰', name:'아몬드버터', badge:'best', ratio:'1:1', desc:'부드럽고 고소해서 빵에 발라먹기 좋아요', tip:'⚠️ 견과류 알레르기가 함께 있다면 주의하세요' },
+    { icon:'🌿', name:'타히니 (참깨페이스트)', badge:'good', ratio:'1:1', desc:'고소하고 고단백, 드레싱·소스에도 활용돼요', tip:'🥗 훔무스 만들 때 기본 재료로도 쓰여요' },
+    { icon:'🎃', name:'호박씨버터', badge:'ok', ratio:'1:1', desc:'견과류 프리, 색이 녹색이지만 고소한 맛', tip:'🌿 견과류 알레르기도 있을 때 가장 안전한 선택이에요' },
   ],
   '대두': [
-    { icon:'🥥', name:'코코넛아미노',    desc:'간장 대체, 부드러운 맛' },
-    { icon:'🫘', name:'병아리콩',        desc:'단백질 공급, 두부 대체' },
-    { icon:'🌿', name:'렌틸콩',          desc:'단백질 풍부한 두부·두유 대체' },
-    { icon:'🌾', name:'귀리음료',        desc:'두유 대신 음료로' },
+    { icon:'🥥', name:'코코넛아미노', badge:'best', ratio:'1:1', desc:'간장 대체재, 짭조름하고 약간 달콤한 맛', tip:'🍱 볶음밥, 잡채, 불고기 양념에 간장 대신 넣어보세요' },
+    { icon:'🫘', name:'병아리콩', badge:'best', ratio:'두부 1모 → 병아리콩 1캔', desc:'단백질 풍부, 두부 요리 대부분 대체 가능', tip:'🥙 으깨면 두부처럼 쓰고, 통으로 쓰면 식감도 살아요' },
+    { icon:'🌿', name:'렌틸콩', badge:'good', ratio:'두유 1컵 → 렌틸 수프 1인분', desc:'단백질이 풍부하고 포만감이 높아요', tip:'🍲 삶아서 수프나 카레에 넣으면 맛있어요' },
+    { icon:'🌾', name:'귀리음료', badge:'good', ratio:'1:1', desc:'두유 대신 음료로 마시거나 요리에 쓸 수 있어요', tip:'☕ 라테, 스무디, 오트밀에 두유 대신 사용해보세요' },
   ],
   '메밀': [
-    { icon:'🍚', name:'쌀국수 (쌀면)',   desc:'소바 대신, 담백한 맛' },
-    { icon:'🍝', name:'쌀가루 파스타',   desc:'이탈리안 스타일로 대체' },
-    { icon:'🌿', name:'감자전분면',      desc:'쫄깃한 식감' },
+    { icon:'🍚', name:'쌀국수 (쌀면)', badge:'best', ratio:'1:1', desc:'소바 대신 국물 요리에, 담백하고 식감 비슷', tip:'🍜 냉면, 비빔면처럼 먹으면 소바 느낌이 나요' },
+    { icon:'🍝', name:'글루텐프리 파스타', badge:'good', ratio:'1:1', desc:'이탈리안 요리를 그대로 즐길 수 있어요', tip:'🌾 쌀 또는 옥수수 기반 파스타가 많이 나와 있어요' },
+    { icon:'🌿', name:'감자전분면 (당면)', badge:'ok', ratio:'1:1', desc:'쫄깃한 식감, 잡채나 볶음 요리에 좋아요', tip:'🥢 불투명해지면 다 익은 거예요' },
   ],
   '새우': [
-    { icon:'🍄', name:'버섯 (표고·느타리)', desc:'쫄깃한 식감과 감칠맛 대체' },
-    { icon:'🐔', name:'닭가슴살',           desc:'단백질 공급' },
-    { icon:'🧇', name:'두부',               desc:'부드러운 단백질 대체' },
-    { icon:'🌿', name:'잭프루트',           desc:'쫄깃한 식감으로 대체' },
+    { icon:'🍄', name:'표고·느타리버섯', badge:'best', ratio:'1:1 (무게 기준)', desc:'쫄깃한 식감과 감칠맛이 새우와 가장 유사해요', tip:'🍤 버섯을 잘게 썰어 새우 볶음처럼 만들어도 맛있어요' },
+    { icon:'🐔', name:'닭가슴살', badge:'good', ratio:'1:1 (무게 기준)', desc:'단백질 공급원, 담백한 맛', tip:'💪 새우 대신 닭가슴살 볶음이나 구이로 대체해 보세요' },
+    { icon:'🌿', name:'잭프루트', badge:'good', ratio:'1:1', desc:'쫄깃하고 섬유질이 많아 식감을 살려줘요', tip:'🌿 아직 덜 익은 잭프루트가 식감 대체에 좋아요' },
+    { icon:'🧇', name:'두부 (단단한 것)', badge:'ok', ratio:'1:1', desc:'부드러운 단백질 대체, 양념 잘 배어요', tip:'⚠️ 대두 알레르기가 없을 때만 사용 가능해요' },
   ],
   '게': [
-    { icon:'🍄', name:'버섯',      desc:'감칠맛과 쫄깃한 식감' },
-    { icon:'🐔', name:'닭고기',    desc:'단백질 보충' },
-    { icon:'🧇', name:'두부',      desc:'부드러운 단백질' },
+    { icon:'🍄', name:'버섯 (킹오이스터)', badge:'best', ratio:'1:1', desc:'결 있는 식감이 게살과 가장 비슷해요', tip:'🦀 세로로 찢어서 사용하면 게살 느낌이 나요' },
+    { icon:'🐔', name:'닭고기 (수육)', badge:'good', ratio:'1:1', desc:'담백한 단백질, 게장류 요리 대체', tip:'🍚 닭가슴살을 결대로 찢으면 게살 식감이 나와요' },
+    { icon:'🧇', name:'두부', badge:'ok', ratio:'1:1', desc:'부드러운 단백질, 게장 종류 요리 대체', tip:'⚠️ 대두 알레르기가 없을 때만 사용 가능해요' },
   ],
   '복숭아': [
-    { icon:'🍐', name:'배',        desc:'비슷한 식감, 은은한 단맛' },
-    { icon:'🍎', name:'사과',      desc:'아삭한 식감, 구하기 쉬움' },
-    { icon:'🥭', name:'망고',      desc:'달콤하고 부드러움' },
-    { icon:'🍍', name:'파인애플',  desc:'새콤달콤, 열대 향' },
-    { icon:'🍇', name:'포도',      desc:'달콤하고 촉촉함' },
+    { icon:'🍐', name:'배', badge:'best', ratio:'1:1', desc:'식감과 수분감이 가장 비슷해요', tip:'🍐 배는 교차반응이 적어 복숭아 대체로 가장 안전해요' },
+    { icon:'🍎', name:'사과', badge:'best', ratio:'1:1', desc:'아삭하고 새콤달콤, 어디서든 구하기 쉬워요', tip:'🍎 복숭아 파이·잼 레시피에서 1:1로 바꿔도 잘 돼요' },
+    { icon:'🥭', name:'망고', badge:'good', ratio:'1:1', desc:'달콤하고 부드러운 식감, 주스·스무디에 좋아요', tip:'🥭 냉동 망고 큐브로 사면 경제적이에요' },
+    { icon:'🍇', name:'포도', badge:'ok', ratio:'1:1', desc:'달콤하고 촉촉, 생과일·주스로 활용', tip:'🍇 씨 없는 포도를 고르면 더 편하게 먹을 수 있어요' },
   ],
   '토마토': [
-    { icon:'🎃', name:'호박 퓨레',          desc:'소스에 사용, 비슷한 농도' },
-    { icon:'🥕', name:'당근 퓨레',          desc:'자연 단맛, 소스·스튜에' },
-    { icon:'🌶️', name:'빨간 파프리카',      desc:'단맛과 붉은 색감 유사' },
-    { icon:'🫙', name:'비트',               desc:'색상과 단맛, 소스에 활용' },
+    { icon:'🌶️', name:'빨간 파프리카', badge:'best', ratio:'1:1', desc:'단맛과 붉은 색감이 가장 비슷해요', tip:'🫕 갈아서 소스로 쓰면 토마토소스와 비슷한 색이 나요' },
+    { icon:'🎃', name:'호박 퓨레', badge:'best', ratio:'1:1', desc:'소스에 사용, 비슷한 농도와 달콤한 맛', tip:'🎃 당면 호박(단호박)을 삶아 갈면 바로 퓨레가 돼요' },
+    { icon:'🥕', name:'당근 퓨레', badge:'good', ratio:'1:1', desc:'자연 단맛, 스튜·소스에 사용', tip:'🥕 당근을 충분히 익혀야 단맛이 살아나요' },
+    { icon:'🫙', name:'비트', badge:'ok', ratio:'½:1', desc:'색상과 단맛은 비슷하지만 흙 향이 있어요', tip:'🌹 비트는 토마토보다 단맛이 강하니 양을 반으로 줄이세요' },
   ],
   '호두': [
-    { icon:'🌻', name:'해바라기씨', desc:'고소하고 바삭, 구하기 쉬움' },
-    { icon:'🎃', name:'호박씨',     desc:'녹색 빛, 고소한 맛' },
-    { icon:'🌿', name:'참깨',       desc:'다양한 요리에' },
-    { icon:'🌰', name:'캐슈넛',     desc:'다른 견과류 OK일 때' },
+    { icon:'🌻', name:'해바라기씨', badge:'best', ratio:'1:1', desc:'고소하고 바삭, 견과류 알레르기 없을 때 최선', tip:'🥗 샐러드에 뿌리거나 구워서 간식으로 드세요' },
+    { icon:'🎃', name:'호박씨', badge:'best', ratio:'1:1', desc:'고소하고 녹색이지만 식감이 비슷해요', tip:'🎃 볶아서 먹으면 더 고소해져요' },
+    { icon:'🌿', name:'참깨', badge:'good', ratio:'½:1', desc:'고소한 맛, 요리에 뿌리거나 소스로', tip:'🌿 두부·나물 요리 마무리에 뿌리면 풍미가 살아요' },
+    { icon:'🌰', name:'캐슈넛', badge:'ok', ratio:'1:1', desc:'부드럽고 고소, 다른 견과류 OK일 때', tip:'⚠️ 다른 견과류 교차반응 여부를 전문의에게 확인하세요' },
   ],
   '잣': [
-    { icon:'🌻', name:'해바라기씨', desc:'비슷한 모양과 고소함' },
-    { icon:'🎃', name:'호박씨',     desc:'고소하고 바삭' },
-    { icon:'🌿', name:'참깨',       desc:'다양한 요리에 뿌리기' },
+    { icon:'🌻', name:'해바라기씨', badge:'best', ratio:'1:1', desc:'비슷한 크기와 고소함, 가장 쉽게 구할 수 있어요', tip:'🌿 잣 대신 비빔밥, 나물, 죽 위에 뿌려보세요' },
+    { icon:'🎃', name:'호박씨', badge:'good', ratio:'1:1', desc:'고소하고 바삭한 식감', tip:'🎃 볶으면 더 고소해지고 향이 진해져요' },
+    { icon:'🌿', name:'참깨', badge:'ok', ratio:'½:1', desc:'다양한 요리에 뿌려 고소함 추가', tip:'🌿 참기름과 함께 쓰면 풍미가 더 좋아요' },
   ],
   '고등어': [
-    { icon:'🐔', name:'닭고기',          desc:'단백질 공급원' },
-    { icon:'🧇', name:'두부',             desc:'부드러운 단백질' },
-    { icon:'🍄', name:'버섯',            desc:'감칠맛 대체' },
-    { icon:'🌿', name:'아마씨·해조류',   desc:'오메가3 공급원 대체' },
+    { icon:'🌿', name:'아마씨·치아씨드', badge:'best', ratio:'오메가3 보충용', desc:'오메가3가 풍부해서 영양 면에서 대체 가능해요', tip:'💊 생선 오메가3 보충제 대신 식물성 오메가3로 대체해요' },
+    { icon:'🐔', name:'닭고기', badge:'good', ratio:'1:1 (무게 기준)', desc:'단백질 공급, 구이·조림 요리 대체', tip:'🍗 닭고기 조림으로 고등어 조림을 대신해 보세요' },
+    { icon:'🍄', name:'표고버섯', badge:'good', ratio:'1:1', desc:'감칠맛과 향이 진해 생선 대체로 쓸 수 있어요', tip:'🍜 국물 요리에 표고버섯을 넣으면 깊은 맛이 나요' },
+    { icon:'🧇', name:'두부 (단단한 것)', badge:'ok', ratio:'1:1', desc:'구이·조림으로 단백질 보충', tip:'🍳 두부를 구워서 양념에 조리면 반찬으로 좋아요' },
   ],
   '오징어': [
-    { icon:'🍄', name:'버섯 (쫄깃한 것)', desc:'식감 유사' },
-    { icon:'🐔', name:'닭고기',            desc:'단백질 보충' },
-    { icon:'🌿', name:'곤약',              desc:'쫄깃한 식감' },
+    { icon:'🍄', name:'킹오이스터버섯', badge:'best', ratio:'1:1', desc:'결 있는 쫄깃한 식감이 오징어와 가장 유사해요', tip:'🦑 세로로 길게 썰어 볶으면 오징어 볶음처럼 돼요' },
+    { icon:'🌿', name:'곤약', badge:'best', ratio:'1:1', desc:'쫄깃하고 칼로리가 거의 없어요', tip:'🍢 오뎅탕, 조림에서 오징어 대신 넣어도 잘 어울려요' },
+    { icon:'🐔', name:'닭가슴살', badge:'ok', ratio:'1:1', desc:'담백한 단백질 보충', tip:'💪 얇게 저며서 볶으면 식감이 비슷해져요' },
   ],
   '굴': [
-    { icon:'🍄', name:'표고버섯',           desc:'감칠맛이 가장 유사' },
-    { icon:'🌿', name:'다시마·미역',         desc:'바다 향과 감칠맛' },
-    { icon:'🧇', name:'두부',               desc:'부드러운 단백질' },
+    { icon:'🍄', name:'표고버섯', badge:'best', ratio:'1:1', desc:'감칠맛이 가장 비슷해요', tip:'🍜 굴소스 대신 표고버섯 우린 물 + 간장을 써보세요' },
+    { icon:'🌿', name:'다시마·미역', badge:'best', ratio:'국물용', desc:'바다 향과 감칠맛을 국물에 더해줘요', tip:'🌊 다시마 국물은 굴 요리 특유의 바다 향을 낼 수 있어요' },
+    { icon:'🧇', name:'두부', badge:'ok', ratio:'1:1', desc:'부드러운 식감과 단백질 보충', tip:'⚠️ 대두 알레르기가 없을 때만 사용 가능해요' },
   ],
   '조개류': [
-    { icon:'🍄', name:'버섯',         desc:'감칠맛과 쫄깃한 식감' },
-    { icon:'🌿', name:'다시마·미역',   desc:'바다 감칠맛' },
-    { icon:'🧇', name:'두부',         desc:'단백질 보충' },
+    { icon:'🍄', name:'버섯 (다양한 종류)', badge:'best', ratio:'1:1', desc:'감칠맛과 쫄깃한 식감이 조개류와 유사해요', tip:'🍜 버섯 육수는 조개 육수 대신 쓸 수 있어요' },
+    { icon:'🌿', name:'다시마·미역', badge:'best', ratio:'국물용', desc:'조개 특유의 바다 향과 감칠맛을 낼 수 있어요', tip:'🌊 다시마 우린 물로 국물 요리 베이스를 만들어보세요' },
+    { icon:'🧇', name:'두부', badge:'ok', ratio:'1:1', desc:'단백질 보충, 찌개·탕 재료로 활용', tip:'⚠️ 대두 알레르기가 없을 때만 사용 가능해요' },
   ],
   '쇠고기': [
-    { icon:'🐔', name:'닭고기',          desc:'담백하고 구하기 쉬움' },
-    { icon:'🐷', name:'돼지고기',        desc:'돼지고기 알레르기 없을 때' },
-    { icon:'🧇', name:'두부·콩고기',     desc:'채식 단백질 대체' },
-    { icon:'🍄', name:'포르치니 버섯',   desc:'진한 감칠맛' },
+    { icon:'🐔', name:'닭고기', badge:'best', ratio:'1:1', desc:'담백하고 어디서든 구하기 쉬워요', tip:'🍗 불고기 양념으로 닭고기를 재우면 비슷한 맛이 나요' },
+    { icon:'🍄', name:'포르치니·표고버섯', badge:'good', ratio:'1:1', desc:'깊고 진한 감칠맛이 나서 스튜·찌개에 좋아요', tip:'🍖 버섯을 구우면 육류 특유의 고소한 향이 나요' },
+    { icon:'🧇', name:'두부·콩고기', badge:'good', ratio:'1:1', desc:'채식 단백질 대체, 다양한 요리에 활용', tip:'🌿 콩고기는 대형마트나 온라인에서 구할 수 있어요' },
+    { icon:'🐷', name:'돼지고기', badge:'ok', ratio:'1:1', desc:'돼지고기 알레르기가 없을 때 대체 가능', tip:'⚠️ 돼지고기 알레르기 여부를 먼저 확인하세요' },
   ],
   '돼지고기': [
-    { icon:'🐔', name:'닭고기',        desc:'담백, 다양한 요리에' },
-    { icon:'🐄', name:'쇠고기',        desc:'쇠고기 알레르기 없을 때' },
-    { icon:'🧇', name:'두부·콩고기',   desc:'채식 단백질 대체' },
-    { icon:'🍄', name:'버섯',          desc:'풍부한 감칠맛' },
+    { icon:'🐔', name:'닭고기', badge:'best', ratio:'1:1', desc:'담백하고 다양한 요리에 자유롭게 활용', tip:'🍗 제육볶음 양념 그대로 닭고기를 볶아도 맛있어요' },
+    { icon:'🍄', name:'버섯', badge:'good', ratio:'1:1', desc:'풍부한 감칠맛, 볶음 요리에 잘 어울려요', tip:'🍄 느타리버섯이나 새송이버섯을 큼직하게 썰어 볶아보세요' },
+    { icon:'🧇', name:'두부·콩고기', badge:'good', ratio:'1:1', desc:'채식 단백질 대체, 볶음·찌개에 활용', tip:'🌿 콩고기는 돼지고기 특유의 씹는 맛을 흉내낼 수 있어요' },
+    { icon:'🐄', name:'쇠고기', badge:'ok', ratio:'1:1', desc:'쇠고기 알레르기가 없을 때', tip:'⚠️ 쇠고기 알레르기 여부를 먼저 확인하세요' },
   ],
   '닭고기': [
-    { icon:'🐷', name:'돼지고기',    desc:'돼지고기 알레르기 없을 때' },
-    { icon:'🐄', name:'쇠고기',      desc:'쇠고기 알레르기 없을 때' },
-    { icon:'🧇', name:'두부·템페',   desc:'채식 단백질 대체' },
-    { icon:'🌿', name:'잭프루트',    desc:'결 같은 식감, 채식 대체' },
+    { icon:'🧇', name:'두부·템페', badge:'best', ratio:'1:1', desc:'채식 단백질, 닭고기 조리법 대부분 대체 가능', tip:'🌿 템페는 발효식품이라 영양도 풍부하고 쫄깃해요' },
+    { icon:'🌿', name:'잭프루트', badge:'best', ratio:'1:1', desc:'결 있는 식감이 닭고기와 매우 유사해요', tip:'🌿 아직 익지 않은 잭프루트(green jackfruit)를 써야 해요' },
+    { icon:'🐷', name:'돼지고기', badge:'ok', ratio:'1:1', desc:'돼지고기 알레르기가 없을 때', tip:'⚠️ 돼지고기 알레르기 여부를 먼저 확인하세요' },
+    { icon:'🐄', name:'쇠고기', badge:'ok', ratio:'1:1', desc:'쇠고기 알레르기가 없을 때', tip:'⚠️ 쇠고기 알레르기 여부를 먼저 확인하세요' },
   ],
   '아황산류': [
-    { icon:'🍎', name:'신선 과일·채소',   desc:'가공 없는 신선식품 위주로' },
-    { icon:'🌿', name:'유기농 제품',       desc:'아황산 첨가 없는 경우 많음' },
-    { icon:'🍷', name:'무황산화제 와인',   desc:'sulfite-free 표시 제품' },
-    { icon:'🫐', name:'냉동 과일',        desc:'건조 과일 대신 냉동으로' },
+    { icon:'🍎', name:'신선 과일·채소', badge:'best', ratio:'가공품 → 신선품', desc:'가공 없는 신선식품은 아황산이 없어요', tip:'🛒 건조 과일, 가공 주스 대신 신선한 것을 선택하세요' },
+    { icon:'🌿', name:'유기농 인증 제품', badge:'good', ratio:'가공품 → 유기농', desc:'아황산 첨가 없는 경우가 많아요', tip:'🌿 "아황산 무첨가" 라벨을 직접 확인하는 게 가장 확실해요' },
+    { icon:'🍷', name:'무황산화제 와인', badge:'good', ratio:'일반 와인 → sulfite-free', desc:'"sulfite-free" 또는 "No added sulfites" 표시 제품', tip:'🍷 내추럴 와인(natural wine) 코너에서 찾을 수 있어요' },
+    { icon:'🫐', name:'냉동 과일', badge:'ok', ratio:'건조 과일 → 냉동', desc:'건조 과일 대신 냉동 과일을 선택하면 아황산 없어요', tip:'🧊 냉동 딸기, 블루베리 등은 아황산 처리가 없는 경우가 많아요' },
   ],
 };
 
@@ -1290,20 +1313,29 @@ function renderAlt() {
     container.innerHTML = '<div class="empty"><div class="empty-icon">🌿</div>내 알레르기를 먼저 등록해 주세요.<br>등록 후 대체 식품을 추천해 드려요!</div>';
     return;
   }
+  var badgeLabel = { best:'가장 추천', good:'추천', ok:'참고' };
   var html = '';
   myA.forEach(function(a) {
     var items = ALT[a];
     html += '<div class="card">';
-    html += '<div class="alt-allergen-label">⚠️ ' + esc(a) + '</div>';
+    html += '<div class="alt-allergen-label">⚠️ ' + esc(a) + ' 대신 먹을 수 있어요</div>';
     if (!items || items.length === 0) {
       html += '<div style="font-size:13px;color:var(--muted)">등록된 대체 식품 정보가 없어요. 전문의와 상담하세요.</div>';
     } else {
       html += '<div class="alt-list">';
       items.forEach(function(it) {
-        html += '<div class="alt-item">';
+        var cls = 'alt-item' + (it.badge === 'best' ? ' alt-best' : it.badge === 'good' ? ' alt-good' : '');
+        html += '<div class="' + cls + '">';
         html += '<div class="alt-icon">' + it.icon + '</div>';
-        html += '<div><div class="alt-name">' + esc(it.name) + '</div>';
-        html += '<div class="alt-desc">' + esc(it.desc) + '</div></div>';
+        html += '<div class="alt-body">';
+        html += '<div class="alt-top-row">';
+        html += '<div class="alt-name">' + esc(it.name) + '</div>';
+        if (it.badge) html += '<span class="alt-badge ' + it.badge + '">' + esc(badgeLabel[it.badge] || it.badge) + '</span>';
+        if (it.ratio) html += '<span class="alt-ratio">📏 ' + esc(it.ratio) + '</span>';
+        html += '</div>';
+        html += '<div class="alt-desc">' + esc(it.desc) + '</div>';
+        if (it.tip) html += '<div class="alt-tip">' + esc(it.tip) + '</div>';
+        html += '</div>';
         html += '</div>';
       });
       html += '</div>';
