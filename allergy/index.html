@@ -169,6 +169,7 @@
     }
     .hit-allergen { font-weight: 800; font-size: 14px; margin-bottom: 3px; }
     .hit-found    { font-size: 12px; color: var(--muted); }
+    .hit-reason   { font-size: 11px; color: var(--muted); margin-top: 3px; padding-left: 2px; line-height: 1.5; opacity: 0.85; }
     .hit-found mark { background: #fde68a; border-radius: 3px; padding: 1px 3px; font-style: normal; }
     .danger .hit-found mark { background: #fca5a5; }
     .warn   .hit-found mark { background: #fde68a; }
@@ -692,6 +693,71 @@ var ADATA = {
                 l2:['아황산나트륨','메타중아황산칼륨','so2'] },
 };
 
+// ══ 성분 위험 이유 ══════════════════════════════════════════
+var REASON = {
+  // 우유
+  '전지분유':   '우유 전체를 건조한 분말로, 우유 단백질이 그대로 포함돼요',
+  '탈지분유':   '지방을 제거한 우유 분말로, 카제인·유청 단백질이 들어있어요',
+  '분유':       '우유를 가공·건조한 분말 제품이에요',
+  '유단백':     '우유에서 직접 추출한 단백질 성분이에요',
+  '유청':       '치즈 제조 시 나오는 우유 부산물로 유청 단백질이 포함돼요',
+  'whey':       '유청(우유 부산물) 단백질이에요',
+  '카제인':     '우유 단백질의 약 80%를 차지하는 주요 알레르겐이에요',
+  'casein':     '우유 단백질(카제인)이에요',
+  '락토스':     '우유에 들어있는 유당으로 유제품 함유를 나타내요',
+  '유당':       '우유의 당 성분으로, 유제품이 사용됐다는 표시예요',
+  '버터':       '우유 지방을 굳혀 만들며, 우유 단백질이 포함될 수 있어요',
+  '크림':       '우유에서 분리한 지방층으로 우유 단백질이 들어있어요',
+  '치즈':       '우유를 발효·농축해 만든 제품으로 우유 단백질이 진하게 남아요',
+  // 계란
+  '난류':       '계란 및 계란 가공품을 통칭하는 법정 표기예요',
+  '전란':       '흰자+노른자가 모두 포함된 계란 그대로예요',
+  '전란분':     '계란 전체를 건조한 분말로 계란 단백질이 그대로예요',
+  '알가공품':   '계란을 가공한 제품으로 계란 단백질이 포함돼요',
+  '난황':       '계란 노른자로, 단백질과 지방이 들어있어요',
+  '난백':       '계란 흰자로, 주요 알레르겐(오보알부민)이 포함돼요',
+  '마요네즈':   '계란 노른자를 주원료로 만든 소스예요',
+  // 밀
+  '소맥분':     '밀가루의 다른 이름으로, 동일한 성분이에요',
+  '소맥':       '밀(wheat)의 한자어 표기예요',
+  '글루텐':     '밀 단백질로, 밀 알레르기의 주요 원인 성분이에요',
+  'gluten':     '밀 단백질(글루텐)이에요',
+  '강력분':     '단백질 함량이 높은 밀가루예요',
+  '중력분':     '일반 목적의 밀가루예요',
+  '박력분':     '단백질 함량이 낮은 밀가루로, 과자·케이크에 사용돼요',
+  '빵가루':     '밀로 만든 빵을 건조·분쇄한 것이에요',
+  '세몰리나':   '밀을 거칠게 분쇄한 입자로, 파스타 등에 사용돼요',
+  // 땅콩
+  '피넛':       '땅콩의 다른 이름이에요',
+  '땅콩버터':   '땅콩을 갈아 만든 스프레드예요',
+  'peanut':     '땅콩(피넛)이에요',
+  '아라키스':   '땅콩의 학명(Arachis)에서 온 성분명이에요',
+  '땅콩분':     '땅콩을 분말화한 것으로 땅콩 단백질이 그대로예요',
+  // 대두
+  '두부':       '콩(대두)을 응고해 만든 식품이에요',
+  '두유':       '콩을 갈아 만든 음료로 대두 단백질이 포함돼요',
+  '된장':       '대두를 발효해 만든 장류예요',
+  '간장':       '대두 발효 과정에서 얻은 액체 장류예요',
+  '대두단백':   '대두에서 직접 추출한 단백질 성분이에요',
+  '대두유':     '콩에서 추출한 식용유로, 미량의 단백질이 남을 수 있어요',
+  '대두레시틴': '콩에서 추출한 유화제로, 소량의 단백질이 포함될 수 있어요',
+  '레시틴':     '주로 대두에서 추출한 유화제로 대두 단백질 흔적이 있을 수 있어요',
+  // 갑각류·해산물
+  '갑각류':     '새우·게·가재 등을 포함하는 분류로, 동일 알레르기 반응을 유발해요',
+  '새우젓':     '새우를 소금에 절여 발효한 식품으로 새우 성분이 농축돼 있어요',
+  '굴소스':     '굴을 농축해 만든 소스로 굴 성분이 그대로 포함돼요',
+  '오징어먹물': '오징어에서 추출한 성분으로 오징어 단백질이 포함돼요',
+  // 기타
+  '토마토케첩': '토마토를 농축해 만든 소스예요',
+  '토마토소스': '토마토를 가공해 만든 소스예요',
+  '토마토페이스트': '토마토를 고농축한 제품이에요',
+  '아황산':     '식품 보존·산화 방지에 쓰이는 아황산 화합물이에요',
+  '이산화황':   '아황산류의 주성분으로 보존제로 사용돼요',
+  '라드':       '돼지 지방을 정제한 것으로 돼지고기 성분이 들어있어요',
+  '베이컨':     '돼지고기를 가공·훈제한 제품이에요',
+  '우지':       '소기름으로 쇠고기 지방 성분이에요',
+};
+
 var PRESETS = Object.keys(ADATA);
 
 // ══ Alternative food data ══════════════════════════════════
@@ -1008,13 +1074,21 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
     dangerHits.forEach(function(h) {
       html += '<div class="hit-item d-hit">';
       html += '<div class="hit-allergen">🚨 ' + esc(h.allergen) + '</div>';
-      html += '<div class="hit-found">검출: ' + h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ') + '</div>';
+      h.found.forEach(function(f) {
+        var reason = REASON[f] || REASON[f.toLowerCase()];
+        html += '<div class="hit-found"><mark>' + esc(f) + '</mark></div>';
+        if (reason) html += '<div class="hit-reason">💡 ' + esc(reason) + '</div>';
+      });
       html += '</div>';
     });
     warnHits.forEach(function(h) {
       html += '<div class="hit-item w-hit">';
       html += '<div class="hit-allergen">⚠️ ' + esc(h.allergen) + '</div>';
-      html += '<div class="hit-found">간접 성분: ' + h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ') + '</div>';
+      h.found.forEach(function(f) {
+        var reason = REASON[f] || REASON[f.toLowerCase()];
+        html += '<div class="hit-found">간접 성분: <mark>' + esc(f) + '</mark></div>';
+        if (reason) html += '<div class="hit-reason">💡 ' + esc(reason) + '</div>';
+      });
       html += '</div>';
     });
     html += '</div>';
