@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>알레르기 체크</title>
+  <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -180,6 +181,36 @@
     }
     .ing-display mark.hl { background: #fca5a5; border-radius: 3px; padding: 1px 2px; font-weight: 700; }
 
+    /* ── Camera / OCR ── */
+    .btn-camera {
+      width: 100%; padding: 15px 12px; margin-bottom: 4px;
+      border: 2px dashed #7dd3fc; border-radius: 14px;
+      background: #f0f9ff; color: #0284c7;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: inherit; transition: background 0.13s;
+    }
+    .btn-camera:active { background: #e0f2fe; }
+
+    .ocr-preview-wrap {
+      border-radius: 13px; overflow: hidden;
+      border: 1.5px solid var(--border); margin-bottom: 4px;
+    }
+    .ocr-preview-wrap img {
+      width: 100%; max-height: 180px; object-fit: cover; display: block;
+    }
+    .ocr-status-bar { padding: 10px 12px; background: #f8fafc; }
+    .ocr-status-text { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .ocr-bar-bg { height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+    .ocr-bar-fill { height: 100%; width: 0%; border-radius: 99px; background: var(--primary); transition: width 0.4s; }
+
+    .or-row {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--muted); font-size: 12px; font-weight: 600;
+      margin: 12px 0 10px;
+    }
+    .or-row::before, .or-row::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
     /* ── Safe notice ── */
     .safe-note {
       font-size: 12px; color: var(--muted); text-align: center;
@@ -262,6 +293,8 @@
 </head>
 <body>
 
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" />
+
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
@@ -305,6 +338,25 @@
 
     <div class="card">
       <div class="card-title">📝 원재료명 입력</div>
+
+      <!-- Camera scan -->
+      <button class="btn-camera" onclick="openCamera()">
+        📷 카메라로 성분표 스캔하기
+      </button>
+
+      <!-- OCR preview + progress -->
+      <div id="ocrPreviewWrap" class="ocr-preview-wrap" style="display:none">
+        <img id="ocrImg" src="" alt="스캔 이미지" />
+        <div class="ocr-status-bar">
+          <div id="ocrStatusText" class="ocr-status-text">준비 중...</div>
+          <div class="ocr-bar-bg">
+            <div id="ocrBarFill" class="ocr-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="or-row">또는 직접 입력</div>
+
       <textarea id="ingInput" placeholder="식품 포장지의 원재료명을 여기에 붙여넣어 주세요.&#10;&#10;예) 밀가루, 설탕, 전지분유, 대두유, 계란, 코코아분말, 식품첨가물..."></textarea>
       <button class="btn btn-primary btn-full" onclick="doCheck()">🔍 성분 확인하기</button>
     </div>
@@ -618,6 +670,59 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+// ══ Camera / OCR ══════════════════════════════════════════
+function openCamera() {
+  document.getElementById('cameraInput').click();
+}
+
+document.getElementById('cameraInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';  // reset so same file can be re-selected
+
+  // Show preview
+  var url = URL.createObjectURL(file);
+  var wrap = document.getElementById('ocrPreviewWrap');
+  document.getElementById('ocrImg').src = url;
+  wrap.style.display = 'block';
+  setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 다운로드로 시간이 걸려요)', 0, 'var(--primary)');
+
+  // Scroll into view
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  Tesseract.recognize(file, 'kor+eng', {
+    logger: function(m) {
+      if (m.status === 'loading tesseract core') {
+        setOcrStatus('📦 OCR 엔진 로딩 중...', 5, 'var(--primary)');
+      } else if (m.status === 'initializing tesseract') {
+        setOcrStatus('⚙️ OCR 초기화 중...', 15, 'var(--primary)');
+      } else if (m.status === 'loading language traineddata') {
+        setOcrStatus('📥 한국어 언어 데이터 로딩 중...', 30, 'var(--primary)');
+      } else if (m.status === 'initializing api') {
+        setOcrStatus('🔧 분석 준비 중...', 50, 'var(--primary)');
+      } else if (m.status === 'recognizing text') {
+        var pct = Math.round(50 + m.progress * 50);
+        setOcrStatus('🔍 텍스트 인식 중... ' + pct + '%', pct, 'var(--primary)');
+      }
+    }
+  }).then(function(result) {
+    var text = result.data.text.trim();
+    document.getElementById('ingInput').value = text;
+    setOcrStatus('✅ 인식 완료! 아래 내용을 확인 후 성분 확인하기를 눌러주세요.', 100, 'var(--safe)');
+    document.getElementById('ingInput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }).catch(function(err) {
+    console.error(err);
+    setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
+  });
+});
+
+function setOcrStatus(msg, pct, color) {
+  document.getElementById('ocrStatusText').textContent = msg;
+  var bar = document.getElementById('ocrBarFill');
+  bar.style.width = pct + '%';
+  bar.style.background = color;
+}
 
 // ══ Init ══════════════════════════════════════════════════
 renderPresets();
