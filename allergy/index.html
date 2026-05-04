@@ -271,6 +271,18 @@
     .btn-rotate:active { background: #e2e8f0; }
     .rotate-label { font-size: 11px; color: var(--muted); font-weight: 600; flex: 1; text-align: center; }
 
+    /* ── OCR 언어 선택 ── */
+    .lang-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .lang-chip {
+      padding: 5px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 700;
+      border: 2px solid var(--border);
+      background: #fff; color: var(--muted);
+      cursor: pointer; user-select: none;
+      transition: all 0.12s;
+    }
+    .lang-chip.on { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+
     /* ── OCR 실패 안내 ── */
     .ocr-fail-panel {
       padding: 12px 12px 14px;
@@ -659,7 +671,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.23</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.24</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -735,6 +747,12 @@
 
     <div class="card">
       <div class="card-title">📝 원재료명 입력</div>
+
+      <!-- 인식 언어 선택 -->
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">🌐 인식 언어 선택</div>
+        <div class="lang-row" id="langChipRow"></div>
+      </div>
 
       <!-- Camera scan -->
       <button class="btn-camera" onclick="openCamera()">
@@ -1652,6 +1670,38 @@ function esc(s) {
 }
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
+// ══ OCR 언어 설정 ══════════════════════════════════════════
+var OCR_LANG_OPTS = [
+  { id:'kor',     label:'🇰🇷 한국어' },
+  { id:'eng',     label:'🇺🇸 영어' },
+  { id:'jpn',     label:'🇯🇵 일본어' },
+  { id:'chi_sim', label:'🇨🇳 중국어(간체)' },
+  { id:'chi_tra', label:'🇨🇳 중국어(번체)' },
+];
+
+var ocrLangs = ld('ac_ocr_langs', ['kor','eng','jpn','chi_sim','chi_tra']);
+
+function renderLangChips() {
+  var row = document.getElementById('langChipRow');
+  if (!row) return;
+  row.innerHTML = OCR_LANG_OPTS.map(function(opt) {
+    var on = ocrLangs.indexOf(opt.id) >= 0;
+    return '<div class="lang-chip' + (on ? ' on' : '') + '" onclick="toggleLang(\'' + opt.id + '\')">' + opt.label + '</div>';
+  }).join('');
+}
+
+function toggleLang(id) {
+  var i = ocrLangs.indexOf(id);
+  if (i >= 0) {
+    if (ocrLangs.length === 1) return;
+    ocrLangs.splice(i, 1);
+  } else {
+    ocrLangs.push(id);
+  }
+  sv('ac_ocr_langs', ocrLangs);
+  renderLangChips();
+}
+
 // ══ Camera / OCR ══════════════════════════════════════════
 // ══ Camera ════════════════════════════════════════════════
 var _appendMode = false;
@@ -1887,8 +1937,9 @@ function startOCR(srcCanvas) {
 
   var canvas = preprocessForOCR(srcCanvas);
 
+  var langStr = ocrLangs.length > 0 ? ocrLangs.join('+') : 'kor';
   setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 시간이 걸려요)', 10, 'var(--primary)');
-  Tesseract.recognize(canvas, 'kor+eng', {
+  Tesseract.recognize(canvas, langStr, {
     logger: function(m) {
       if      (m.status === 'loading tesseract core')       setOcrStatus('📦 OCR 엔진 로딩 중...', 15, 'var(--primary)');
       else if (m.status === 'initializing tesseract')       setOcrStatus('⚙️ OCR 초기화 중...', 25, 'var(--primary)');
@@ -2022,6 +2073,7 @@ function initEasyMode() {
 // ══ Init ══════════════════════════════════════════════════
 renderPresets();
 renderTags();
+renderLangChips();
 renderRecords();
 renderFPList();
 initShareView();
