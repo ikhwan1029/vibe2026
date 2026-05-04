@@ -305,6 +305,69 @@
     /* ── Footer note ── */
     .foot-note { font-size: 11px; color: #94a3b8; text-align: center; padding: 8px 0 14px; }
 
+    /* ── 대체식품 탭 ── */
+    .alt-allergen-label {
+      display: inline-flex; align-items: center;
+      background: #fee2e2; color: #991b1b;
+      border-radius: 999px; padding: 4px 13px;
+      font-size: 13px; font-weight: 800; margin-bottom: 10px;
+    }
+    .alt-list { display: flex; flex-direction: column; gap: 8px; }
+    .alt-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: #f8fafc; border-radius: 11px; padding: 10px 12px;
+    }
+    .alt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+    .alt-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .alt-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── 보호자 공유 ── */
+    .btn-share {
+      width: 100%; margin-top: 10px; padding: 12px;
+      border-radius: 12px; background: #f0fdf4;
+      border: 2px solid #86efac; color: #16a34a;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-share:active { background: #dcfce7; }
+
+    .share-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.52);
+      display: flex; align-items: flex-end;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .share-sheet {
+      background: #fff; width: 100%;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 28px; max-height: 78vh; overflow-y: auto;
+    }
+    .share-handle {
+      width: 36px; height: 4px; background: #e2e8f0;
+      border-radius: 99px; margin: 0 auto 18px;
+    }
+    .share-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .share-sub   { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+    .share-tags  { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+    .share-tag {
+      padding: 5px 13px; background: #fee2e2;
+      border-radius: 999px; font-size: 13px; font-weight: 700; color: #991b1b;
+    }
+    .share-btn-row { display: flex; gap: 10px; }
+    .btn-save-share {
+      flex: 1; padding: 13px; border-radius: 12px;
+      background: var(--primary); color: #fff;
+      font-size: 15px; font-weight: 700;
+      border: none; cursor: pointer; font-family: inherit;
+    }
+    .btn-close-share {
+      padding: 13px 16px; border-radius: 12px;
+      background: #f1f5f9; color: var(--muted);
+      font-size: 14px; font-weight: 700;
+      border: 2px solid var(--border); cursor: pointer; font-family: inherit;
+    }
+
     /* ── Tab bar ── */
     .tab-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -360,6 +423,7 @@
       </p>
     </div>
 
+    <button class="btn-share" onclick="shareLink()">🔗 보호자에게 공유하기</button>
     <p class="foot-note">데이터는 이 기기에만 저장됩니다</p>
   </div>
 
@@ -417,7 +481,27 @@
     <div id="recordList"></div>
   </div>
 
+  <!-- ════════════ TAB 4 : 대체식품 ════════════ -->
+  <div class="tab-section" id="tab-alt">
+    <div id="altList"></div>
+    <p class="foot-note">⚠️ 교차 반응 가능성이 있으니 전문의와 상담 후 섭취하세요</p>
+  </div>
+
 </div><!-- /content -->
+
+<!-- ── 보호자 공유 시트 ── -->
+<div id="shareOverlay" class="share-overlay" style="display:none" onclick="dismissShare(event)">
+  <div class="share-sheet">
+    <div class="share-handle"></div>
+    <div class="share-title">⚠️ 알레르기 주의 목록</div>
+    <div class="share-sub">이 분이 피해야 할 알레르기 성분이에요</div>
+    <div class="share-tags" id="sharedTagList"></div>
+    <div class="share-btn-row">
+      <button class="btn-save-share" onclick="saveSharedAllergens()">📥 내 기기에 저장</button>
+      <button class="btn-close-share" onclick="dismissShare()">닫기</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Tab bar ── -->
 <div class="tab-bar">
@@ -429,6 +513,9 @@
   </button>
   <button class="t-btn" id="tbtn-memo" onclick="goTab('memo')">
     <span class="ico">📋</span>기록
+  </button>
+  <button class="t-btn" id="tbtn-alt" onclick="goTab('alt')">
+    <span class="ico">🌿</span>대체식품
   </button>
 </div>
 
@@ -479,6 +566,128 @@ var ADATA = {
 
 var PRESETS = Object.keys(ADATA);
 
+// ══ Alternative food data ══════════════════════════════════
+var ALT = {
+  '우유': [
+    { icon:'🥛', name:'두유',              desc:'단백질 풍부, 가장 무난한 대체품' },
+    { icon:'🌾', name:'귀리음료 (오트밀크)', desc:'담백하고 고소, 카페에도 많음' },
+    { icon:'🌰', name:'아몬드밀크',         desc:'저칼로리, 단맛이 적음' },
+    { icon:'🥥', name:'코코넛밀크',         desc:'풍미 강함, 요리에 좋음' },
+    { icon:'🍚', name:'쌀음료',             desc:'가장 순한 맛, 아이에게도 적합' },
+  ],
+  '계란': [
+    { icon:'🌿', name:'아마씨 + 물 (1:3)', desc:'베이킹 결합제, 구수한 맛' },
+    { icon:'🌿', name:'치아씨드 + 물 (1:3)', desc:'베이킹에 사용, 영양 풍부' },
+    { icon:'🫘', name:'아쿠아파바 (병아리콩 삶은 물)', desc:'머랭·마요네즈 대체 가능' },
+    { icon:'🍌', name:'바나나 (½개 = 계란 1개)', desc:'베이킹에, 단맛이 더해짐' },
+    { icon:'🧇', name:'두부 (연두부)',       desc:'스크램블·결합제로 활용' },
+  ],
+  '밀': [
+    { icon:'🍚', name:'쌀가루',    desc:'가장 가까운 식감, 구하기 쉬움' },
+    { icon:'🌿', name:'메밀가루',  desc:'구수한 풍미, 국수·팬케이크에' },
+    { icon:'🌾', name:'귀리가루',  desc:'고소하고 쫄깃, 쿠키·빵에 적합' },
+    { icon:'🌰', name:'아몬드가루', desc:'촉촉한 식감, 저탄수화물' },
+    { icon:'🥥', name:'타피오카가루', desc:'쫄깃한 식감이 필요할 때' },
+  ],
+  '땅콩': [
+    { icon:'🌻', name:'해바라기씨버터', desc:'고소하고 진한 맛, 가장 유사' },
+    { icon:'🌰', name:'아몬드버터',     desc:'부드럽고 고소, 구하기 쉬움' },
+    { icon:'🌿', name:'타히니 (참깨페이스트)', desc:'고소하고 고단백' },
+    { icon:'🎃', name:'호박씨버터',     desc:'견과류 알레르기 없을 때 적합' },
+  ],
+  '대두': [
+    { icon:'🥥', name:'코코넛아미노',    desc:'간장 대체, 부드러운 맛' },
+    { icon:'🫘', name:'병아리콩',        desc:'단백질 공급, 두부 대체' },
+    { icon:'🌿', name:'렌틸콩',          desc:'단백질 풍부한 두부·두유 대체' },
+    { icon:'🌾', name:'귀리음료',        desc:'두유 대신 음료로' },
+  ],
+  '메밀': [
+    { icon:'🍚', name:'쌀국수 (쌀면)',   desc:'소바 대신, 담백한 맛' },
+    { icon:'🍝', name:'쌀가루 파스타',   desc:'이탈리안 스타일로 대체' },
+    { icon:'🌿', name:'감자전분면',      desc:'쫄깃한 식감' },
+  ],
+  '새우': [
+    { icon:'🍄', name:'버섯 (표고·느타리)', desc:'쫄깃한 식감과 감칠맛 대체' },
+    { icon:'🐔', name:'닭가슴살',           desc:'단백질 공급' },
+    { icon:'🧇', name:'두부',               desc:'부드러운 단백질 대체' },
+    { icon:'🌿', name:'잭프루트',           desc:'쫄깃한 식감으로 대체' },
+  ],
+  '게': [
+    { icon:'🍄', name:'버섯',      desc:'감칠맛과 쫄깃한 식감' },
+    { icon:'🐔', name:'닭고기',    desc:'단백질 보충' },
+    { icon:'🧇', name:'두부',      desc:'부드러운 단백질' },
+  ],
+  '복숭아': [
+    { icon:'🍐', name:'배',        desc:'비슷한 식감, 은은한 단맛' },
+    { icon:'🍎', name:'사과',      desc:'아삭한 식감, 구하기 쉬움' },
+    { icon:'🥭', name:'망고',      desc:'달콤하고 부드러움' },
+    { icon:'🍍', name:'파인애플',  desc:'새콤달콤, 열대 향' },
+    { icon:'🍇', name:'포도',      desc:'달콤하고 촉촉함' },
+  ],
+  '토마토': [
+    { icon:'🎃', name:'호박 퓨레',          desc:'소스에 사용, 비슷한 농도' },
+    { icon:'🥕', name:'당근 퓨레',          desc:'자연 단맛, 소스·스튜에' },
+    { icon:'🌶️', name:'빨간 파프리카',      desc:'단맛과 붉은 색감 유사' },
+    { icon:'🫙', name:'비트',               desc:'색상과 단맛, 소스에 활용' },
+  ],
+  '호두': [
+    { icon:'🌻', name:'해바라기씨', desc:'고소하고 바삭, 구하기 쉬움' },
+    { icon:'🎃', name:'호박씨',     desc:'녹색 빛, 고소한 맛' },
+    { icon:'🌿', name:'참깨',       desc:'다양한 요리에' },
+    { icon:'🌰', name:'캐슈넛',     desc:'다른 견과류 OK일 때' },
+  ],
+  '잣': [
+    { icon:'🌻', name:'해바라기씨', desc:'비슷한 모양과 고소함' },
+    { icon:'🎃', name:'호박씨',     desc:'고소하고 바삭' },
+    { icon:'🌿', name:'참깨',       desc:'다양한 요리에 뿌리기' },
+  ],
+  '고등어': [
+    { icon:'🐔', name:'닭고기',          desc:'단백질 공급원' },
+    { icon:'🧇', name:'두부',             desc:'부드러운 단백질' },
+    { icon:'🍄', name:'버섯',            desc:'감칠맛 대체' },
+    { icon:'🌿', name:'아마씨·해조류',   desc:'오메가3 공급원 대체' },
+  ],
+  '오징어': [
+    { icon:'🍄', name:'버섯 (쫄깃한 것)', desc:'식감 유사' },
+    { icon:'🐔', name:'닭고기',            desc:'단백질 보충' },
+    { icon:'🌿', name:'곤약',              desc:'쫄깃한 식감' },
+  ],
+  '굴': [
+    { icon:'🍄', name:'표고버섯',           desc:'감칠맛이 가장 유사' },
+    { icon:'🌿', name:'다시마·미역',         desc:'바다 향과 감칠맛' },
+    { icon:'🧇', name:'두부',               desc:'부드러운 단백질' },
+  ],
+  '조개류': [
+    { icon:'🍄', name:'버섯',         desc:'감칠맛과 쫄깃한 식감' },
+    { icon:'🌿', name:'다시마·미역',   desc:'바다 감칠맛' },
+    { icon:'🧇', name:'두부',         desc:'단백질 보충' },
+  ],
+  '쇠고기': [
+    { icon:'🐔', name:'닭고기',          desc:'담백하고 구하기 쉬움' },
+    { icon:'🐷', name:'돼지고기',        desc:'돼지고기 알레르기 없을 때' },
+    { icon:'🧇', name:'두부·콩고기',     desc:'채식 단백질 대체' },
+    { icon:'🍄', name:'포르치니 버섯',   desc:'진한 감칠맛' },
+  ],
+  '돼지고기': [
+    { icon:'🐔', name:'닭고기',        desc:'담백, 다양한 요리에' },
+    { icon:'🐄', name:'쇠고기',        desc:'쇠고기 알레르기 없을 때' },
+    { icon:'🧇', name:'두부·콩고기',   desc:'채식 단백질 대체' },
+    { icon:'🍄', name:'버섯',          desc:'풍부한 감칠맛' },
+  ],
+  '닭고기': [
+    { icon:'🐷', name:'돼지고기',    desc:'돼지고기 알레르기 없을 때' },
+    { icon:'🐄', name:'쇠고기',      desc:'쇠고기 알레르기 없을 때' },
+    { icon:'🧇', name:'두부·템페',   desc:'채식 단백질 대체' },
+    { icon:'🌿', name:'잭프루트',    desc:'결 같은 식감, 채식 대체' },
+  ],
+  '아황산류': [
+    { icon:'🍎', name:'신선 과일·채소',   desc:'가공 없는 신선식품 위주로' },
+    { icon:'🌿', name:'유기농 제품',       desc:'아황산 첨가 없는 경우 많음' },
+    { icon:'🍷', name:'무황산화제 와인',   desc:'sulfite-free 표시 제품' },
+    { icon:'🫐', name:'냉동 과일',        desc:'건조 과일 대신 냉동으로' },
+  ],
+};
+
 // ══ Storage ═══════════════════════════════════════════════
 function ld(k, def) { try { return JSON.parse(localStorage.getItem(k)) || def; } catch(e) { return def; } }
 function sv(k, v)   { localStorage.setItem(k, JSON.stringify(v)); }
@@ -488,12 +697,13 @@ var records = ld('ac_records', []);
 
 // ══ Tab switching ══════════════════════════════════════════
 function goTab(name) {
-  ['allergy','check','memo'].forEach(function(t) {
+  ['allergy','check','memo','alt'].forEach(function(t) {
     document.getElementById('tab-'+t).classList.toggle('active', t === name);
     document.getElementById('tbtn-'+t).classList.toggle('on', t === name);
   });
   if (name === 'check') { document.getElementById('noBanner').style.display = myA.length === 0 ? 'block' : 'none'; }
   if (name === 'memo')  { renderRecords(); }
+  if (name === 'alt')   { renderAlt(); }
 }
 
 // ══ Tab 1: Allergen management ════════════════════════════
@@ -699,6 +909,80 @@ function renderRecords() {
     html += '</div>';
   });
   container.innerHTML = html;
+}
+
+// ══ Tab 4: 대체식품 ════════════════════════════════════════
+function renderAlt() {
+  var container = document.getElementById('altList');
+  if (myA.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🌿</div>내 알레르기를 먼저 등록해 주세요.<br>등록 후 대체 식품을 추천해 드려요!</div>';
+    return;
+  }
+  var html = '';
+  myA.forEach(function(a) {
+    var items = ALT[a];
+    html += '<div class="card">';
+    html += '<div class="alt-allergen-label">⚠️ ' + esc(a) + '</div>';
+    if (!items || items.length === 0) {
+      html += '<div style="font-size:13px;color:var(--muted)">등록된 대체 식품 정보가 없어요. 전문의와 상담하세요.</div>';
+    } else {
+      html += '<div class="alt-list">';
+      items.forEach(function(it) {
+        html += '<div class="alt-item">';
+        html += '<div class="alt-icon">' + it.icon + '</div>';
+        html += '<div><div class="alt-name">' + esc(it.name) + '</div>';
+        html += '<div class="alt-desc">' + esc(it.desc) + '</div></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+// ══ 보호자 공유 링크 ════════════════════════════════════════
+function shareLink() {
+  if (myA.length === 0) { alert('먼저 알레르기를 등록해 주세요.'); return; }
+  var encoded = btoa(encodeURIComponent(myA.join(',')));
+  var url = location.origin + location.pathname + '?share=' + encoded;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      alert('링크가 복사됐어요!\n보호자에게 공유해 주세요. 📋');
+    }).catch(function() { prompt('아래 링크를 복사해 주세요:', url); });
+  } else {
+    prompt('아래 링크를 복사해 주세요:', url);
+  }
+}
+
+var _sharedA = null;
+
+function initShareView() {
+  var sp = new URLSearchParams(location.search).get('share');
+  if (!sp) return;
+  try {
+    _sharedA = decodeURIComponent(atob(sp)).split(',').filter(Boolean);
+  } catch(e) { return; }
+  if (_sharedA.length === 0) return;
+  var tagHtml = _sharedA.map(function(a) {
+    return '<span class="share-tag">' + esc(a) + '</span>';
+  }).join('');
+  document.getElementById('sharedTagList').innerHTML = tagHtml;
+  document.getElementById('shareOverlay').style.display = 'flex';
+}
+
+function saveSharedAllergens() {
+  if (!_sharedA) return;
+  _sharedA.forEach(function(a) { if (myA.indexOf(a) < 0) myA.push(a); });
+  sv('ac_allergens', myA);
+  renderPresets(); renderTags();
+  dismissShare();
+  alert('알레르기 목록이 내 기기에 저장됐어요!');
+}
+
+function dismissShare(e) {
+  if (e && e.target !== document.getElementById('shareOverlay')) return;
+  document.getElementById('shareOverlay').style.display = 'none';
 }
 
 // ══ Utils ══════════════════════════════════════════════════
@@ -931,6 +1215,7 @@ function setOcrStatus(msg, pct, color) {
 renderPresets();
 renderTags();
 renderRecords();
+initShareView();
 </script>
 </body>
 </html>
