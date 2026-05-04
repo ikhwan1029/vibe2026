@@ -809,7 +809,7 @@
     <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
     <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
   </div>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.38</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.39</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -1910,9 +1910,10 @@ function addMorePhoto() {
 }
 
 // ══ Crop tool state ════════════════════════════════════════
-var _cImg = null;      // full-res Image object (already rotated)
-var _cScale = 1;       // display canvas → image scale
-var _cRect = null;     // selected rect in canvas coords {x,y,w,h}
+var _cImg = null;
+var _cScale = 1;
+var _cDPR   = 1;       // devicePixelRatio (레티나 대응)
+var _cRect = null;
 var _cDrag = false;
 var _cStart = { x: 0, y: 0 };
 var _cCanvas = null;
@@ -1937,11 +1938,17 @@ function rotateBy(deg) {
   rotated.onload = function() {
     _cImg = rotated;
     var wrap = document.getElementById('ocrPreviewWrap');
-    var maxW = Math.min(wrap.offsetWidth || 400, 440);
-    var maxH = 320;
+    var maxW = wrap.offsetWidth || 500;
+    var maxH = 480;
     _cScale = Math.min(maxW / _cImg.width, maxH / _cImg.height);
-    _cCanvas.width  = Math.round(_cImg.width  * _cScale);
-    _cCanvas.height = Math.round(_cImg.height * _cScale);
+    var cssW = Math.round(_cImg.width  * _cScale);
+    var cssH = Math.round(_cImg.height * _cScale);
+    _cCanvas.width  = cssW * _cDPR;
+    _cCanvas.height = cssH * _cDPR;
+    _cCanvas.style.width  = cssW + 'px';
+    _cCanvas.style.height = cssH + 'px';
+    _cCtx = _cCanvas.getContext('2d');
+    _cCtx.scale(_cDPR, _cDPR);
     _cRect = null;
     drawCrop();
   };
@@ -1968,11 +1975,18 @@ function loadImageFile(blob) {
   var url  = URL.createObjectURL(blob);
 
   _cImg.onload = function() {
-    var maxW = Math.min(wrap.offsetWidth || 400, 440);
-    var maxH = 320;
+    _cDPR = window.devicePixelRatio || 1;
+    var maxW = wrap.offsetWidth || 500;
+    var maxH = 480;
     _cScale = Math.min(maxW / _cImg.width, maxH / _cImg.height);
-    _cCanvas.width  = Math.round(_cImg.width  * _cScale);
-    _cCanvas.height = Math.round(_cImg.height * _cScale);
+    var cssW = Math.round(_cImg.width  * _cScale);
+    var cssH = Math.round(_cImg.height * _cScale);
+    _cCanvas.width  = cssW * _cDPR;
+    _cCanvas.height = cssH * _cDPR;
+    _cCanvas.style.width  = cssW + 'px';
+    _cCanvas.style.height = cssH + 'px';
+    _cCtx = _cCanvas.getContext('2d');
+    _cCtx.scale(_cDPR, _cDPR);
     _cRect = null;
     drawCrop();
     URL.revokeObjectURL(url);
@@ -2020,10 +2034,8 @@ document.addEventListener('paste', function(e) {
 });
 
 function canvasPos(e) {
-  var r  = _cCanvas.getBoundingClientRect();
-  var sx = _cCanvas.width  / r.width;
-  var sy = _cCanvas.height / r.height;
-  return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
+  var r = _cCanvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
 }
 
 function cropDragStart(p) {
@@ -2046,11 +2058,12 @@ function cropDragEnd() {
 
 function drawCrop() {
   if (!_cCtx || !_cImg) return;
-  _cCtx.drawImage(_cImg, 0, 0, _cCanvas.width, _cCanvas.height);
+  var _cssW = _cCanvas.width / _cDPR, _cssH = _cCanvas.height / _cDPR;
+  _cCtx.drawImage(_cImg, 0, 0, _cssW, _cssH);
   if (_cRect && _cRect.w > 0 && _cRect.h > 0) {
     // dim outside
     _cCtx.fillStyle = 'rgba(0,0,0,0.55)';
-    _cCtx.fillRect(0, 0, _cCanvas.width, _cCanvas.height);
+    _cCtx.fillRect(0, 0, _cssW, _cssH);
     // restore selected area from image
     _cCtx.drawImage(_cImg,
       _cRect.x / _cScale, _cRect.y / _cScale,
@@ -2077,7 +2090,7 @@ function drawCrop() {
 
 function cropPreset(zone) {
   if (!_cImg) return;
-  var w = _cCanvas.width, h = _cCanvas.height;
+  var w = _cCanvas.width / _cDPR, h = _cCanvas.height / _cDPR;
   if      (zone === 'top')    _cRect = { x: 0,            y: 0,            w: w,            h: Math.round(h * 0.5) };
   else if (zone === 'bottom') _cRect = { x: 0,            y: Math.round(h * 0.5), w: w, h: Math.round(h * 0.5) };
   else if (zone === 'left')   _cRect = { x: 0,            y: 0,            w: Math.round(w * 0.5), h: h };
