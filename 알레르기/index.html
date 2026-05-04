@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>알레르기 체크</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --safe:    #10b981;
+      --warn:    #f59e0b;
+      --danger:  #ef4444;
+      --primary: #0ea5e9;
+      --bg:      #f1f5f9;
+      --card:    #ffffff;
+      --text:    #1e293b;
+      --muted:   #64748b;
+      --border:  #e2e8f0;
+    }
+
+    body {
+      font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 76px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: #fff;
+      padding: 18px 16px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 16px rgba(14,165,233,0.28);
+    }
+    .header h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; }
+    .header p  { font-size: 12px; opacity: 0.82; margin-top: 3px; }
+
+    /* ── Content ── */
+    .content {
+      padding: 14px 14px 0;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── Tabs ── */
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Preset chips ── */
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip {
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+      transition: all 0.13s;
+      user-select: none;
+    }
+    .chip.on {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+
+    /* ── My allergen tags ── */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 7px; min-height: 32px; }
+    .a-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px 5px 12px;
+      background: #fee2e2;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #991b1b;
+    }
+    .a-tag button {
+      background: none; border: none; cursor: pointer;
+      color: #ef4444; font-size: 16px; line-height: 1;
+      display: flex; align-items: center; padding: 0 2px;
+    }
+
+    /* ── Inputs ── */
+    .input-row { display: flex; gap: 8px; margin-top: 12px; }
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 11px 13px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      color: var(--text);
+      background: #fff;
+    }
+    input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--primary); }
+    textarea { min-height: 130px; resize: vertical; line-height: 1.6; }
+    .input-row input { flex: 1; margin-top: 0; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 12px 18px; border-radius: 12px; font-size: 15px; font-weight: 700;
+      cursor: pointer; border: none; transition: all 0.13s; font-family: inherit;
+    }
+    .btn-full { width: 100%; margin-top: 10px; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:active { background: #0284c7; }
+    .btn-sm {
+      padding: 8px 14px; font-size: 13px; border-radius: 9px;
+      background: #f1f5f9; color: var(--text); border: 2px solid var(--border);
+    }
+    .btn-add { background: #f0f9ff; border: 2px dashed #7dd3fc; color: #0284c7; width: 100%; border-radius: 13px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+    /* ── Result box ── */
+    .result-wrap { margin-top: 4px; }
+    .result-box {
+      border-radius: 18px;
+      padding: 22px 18px 18px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .result-box.safe   { background: #ecfdf5; border: 2.5px solid var(--safe); }
+    .result-box.warn   { background: #fffbeb; border: 2.5px solid var(--warn); }
+    .result-box.danger { background: #fef2f2; border: 2.5px solid var(--danger); }
+
+    .result-icon  { font-size: 44px; margin-bottom: 6px; }
+    .result-level { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; opacity: 0.6; }
+    .result-msg   { font-size: 17px; font-weight: 800; margin-bottom: 14px; line-height: 1.4; }
+    .result-box.safe   .result-msg { color: #065f46; }
+    .result-box.warn   .result-msg { color: #92400e; }
+    .result-box.danger .result-msg { color: #991b1b; }
+
+    .hit-list { text-align: left; display: flex; flex-direction: column; gap: 7px; }
+    .hit-item {
+      background: rgba(255,255,255,0.75);
+      border-radius: 11px;
+      padding: 10px 12px;
+      backdrop-filter: blur(4px);
+    }
+    .hit-allergen { font-weight: 800; font-size: 14px; margin-bottom: 3px; }
+    .hit-found    { font-size: 12px; color: var(--muted); }
+    .hit-found mark { background: #fde68a; border-radius: 3px; padding: 1px 3px; font-style: normal; }
+    .danger .hit-found mark { background: #fca5a5; }
+    .warn   .hit-found mark { background: #fde68a; }
+
+    /* Highlighted ingredient display */
+    .ing-display {
+      background: #f8fafc; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; font-size: 13px; line-height: 1.9; max-height: 180px;
+      overflow-y: auto; margin-top: 10px; word-break: break-all;
+    }
+    .ing-display mark.hl { background: #fca5a5; border-radius: 3px; padding: 1px 2px; font-weight: 700; }
+
+    /* ── Safe notice ── */
+    .safe-note {
+      font-size: 12px; color: var(--muted); text-align: center;
+      margin-top: 10px; line-height: 1.6;
+      background: #f8fafc; border-radius: 10px; padding: 10px;
+    }
+
+    /* ── No allergen banner ── */
+    .info-banner {
+      background: #fefce8; border: 1.5px solid #fde047;
+      border-radius: 12px; padding: 11px 14px;
+      font-size: 13px; color: #854d0e; margin-bottom: 12px;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      margin: 14px 0 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Memo ── */
+    .memo-form-card { margin-bottom: 12px; }
+    .memo-form-fields { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .btn-save { background: #10b981; color: #fff; }
+    .btn-save:active { background: #059669; }
+
+    .memo-item {
+      display: flex; align-items: center; gap: 10px;
+      background: #fff; border-radius: 13px; padding: 12px 14px;
+      margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .m-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .m-dot.safe   { background: var(--safe); }
+    .m-dot.warn   { background: var(--warn); }
+    .m-dot.danger { background: var(--danger); }
+    .m-dot.todo   { background: #94a3b8; }
+    .m-body { flex: 1; min-width: 0; }
+    .m-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .m-note { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .m-badge {
+      flex-shrink: 0; font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .m-badge.safe   { background: #d1fae5; color: #065f46; }
+    .m-badge.warn   { background: #fef3c7; color: #92400e; }
+    .m-badge.danger { background: #fee2e2; color: #991b1b; }
+    .m-badge.todo   { background: #f1f5f9; color: var(--muted); }
+    .m-del { color: #cbd5e1; font-size: 18px; cursor: pointer; flex-shrink: 0; padding: 2px; }
+    .m-del:hover { color: var(--danger); }
+
+    .empty {
+      text-align: center; color: var(--muted);
+      padding: 36px 20px; font-size: 14px; line-height: 2;
+    }
+    .empty-icon { font-size: 44px; margin-bottom: 8px; }
+
+    /* ── Footer note ── */
+    .foot-note { font-size: 11px; color: #94a3b8; text-align: center; padding: 8px 0 14px; }
+
+    /* ── Tab bar ── */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff; border-top: 1px solid var(--border);
+      display: flex; z-index: 300;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.07);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .t-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 9px 0 7px;
+      cursor: pointer; border: none; background: none;
+      color: #94a3b8; font-size: 10px; font-weight: 700;
+      gap: 3px; transition: color 0.13s; font-family: inherit;
+      letter-spacing: 0.3px;
+    }
+    .t-btn .ico { font-size: 22px; }
+    .t-btn.on { color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔍 알레르기 성분 체크</h1>
+  <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
+</div>
+
+<div class="content">
+
+  <!-- ════════════ TAB 1 : 내 알레르기 ════════════ -->
+  <div class="tab-section active" id="tab-allergy">
+
+    <div class="card">
+      <div class="card-title">⚠️ 자주 쓰는 알레르기 선택</div>
+      <div class="chip-grid" id="presetGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✏️ 직접 추가</div>
+      <div class="input-row">
+        <input type="text" id="customInput" placeholder="예: 고등어, peanut, 복숭아향..." />
+        <button class="btn btn-sm" onclick="addCustom()">추가</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 내 알레르기 목록</div>
+      <div class="tag-row" id="myTagsRow"></div>
+      <p id="emptyAllergenMsg" style="font-size:13px;color:#94a3b8;margin-top:10px;display:none;">
+        아직 등록된 알레르기가 없어요
+      </p>
+    </div>
+
+    <p class="foot-note">데이터는 이 기기에만 저장됩니다</p>
+  </div>
+
+  <!-- ════════════ TAB 2 : 성분 확인 ════════════ -->
+  <div class="tab-section" id="tab-check">
+
+    <div id="noBanner" class="info-banner" style="display:none">
+      ⚠️ 먼저 <strong>내 알레르기</strong> 탭에서 피해야 할 성분을 등록해 주세요.
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 원재료명 입력</div>
+      <textarea id="ingInput" placeholder="식품 포장지의 원재료명을 여기에 붙여넣어 주세요.&#10;&#10;예) 밀가루, 설탕, 전지분유, 대두유, 계란, 코코아분말, 식품첨가물..."></textarea>
+      <button class="btn btn-primary btn-full" onclick="doCheck()">🔍 성분 확인하기</button>
+    </div>
+
+    <div id="resultArea" class="result-wrap"></div>
+
+  </div>
+
+  <!-- ════════════ TAB 3 : 안전 메모 ════════════ -->
+  <div class="tab-section" id="tab-memo">
+
+    <button class="btn-add" onclick="toggleMemoForm()">＋ 음식 기록 추가하기</button>
+
+    <div id="memoFormCard" class="card memo-form-card" style="display:none">
+      <div class="card-title">📌 새 기록</div>
+      <div class="memo-form-fields">
+        <input type="text" id="memoName" placeholder="음식 이름 또는 브랜드명" />
+        <select id="memoStatus">
+          <option value="safe">✅ 먹어도 안전했어요</option>
+          <option value="warn">⚠️ 주의 필요 (먹었는데 찝찝했어요)</option>
+          <option value="danger">❌ 위험했어요 / 절대 피해야 해요</option>
+          <option value="todo">📌 다음에 확인해볼 음식</option>
+        </select>
+        <input type="text" id="memoNote" placeholder="메모 (선택)" />
+        <button class="btn btn-save btn-full" onclick="saveMemo()">저장</button>
+      </div>
+    </div>
+
+    <div id="memoList"></div>
+
+  </div>
+
+</div><!-- /content -->
+
+<!-- ── Tab bar ── -->
+<div class="tab-bar">
+  <button class="t-btn on" id="tbtn-allergy" onclick="goTab('allergy')">
+    <span class="ico">🧬</span>내 알레르기
+  </button>
+  <button class="t-btn" id="tbtn-check" onclick="goTab('check')">
+    <span class="ico">🔍</span>성분 확인
+  </button>
+  <button class="t-btn" id="tbtn-memo" onclick="goTab('memo')">
+    <span class="ico">📒</span>안전 메모
+  </button>
+</div>
+
+<script>
+// ══ Allergen data with 2-tier synonyms ═══════════════════════
+var ADATA = {
+  '우유':     { l1:['우유','전지분유','탈지분유','분유','유단백','milk','밀크'],
+                l2:['유청','카제인','락토스','유당','lactose','casein','whey','dairy','버터','크림','치즈'] },
+  '계란':     { l1:['계란','달걀','난황','난백','egg','가금란'],
+                l2:['에그','난각','오보알부민'] },
+  '땅콩':     { l1:['땅콩','피넛','peanut','땅콩버터'],
+                l2:['아라키스','땅콩분','아라키스유'] },
+  '밀':       { l1:['밀가루','소맥분','소맥','wheat','글루텐','gluten'],
+                l2:['밀','강력분','중력분','박력분','빵가루','세몰리나','durum'] },
+  '대두':     { l1:['대두','콩','두부','두유','soy','soya'],
+                l2:['된장','간장','대두단백','대두유','대두레시틴','레시틴','메주'] },
+  '메밀':     { l1:['메밀','메밀가루','buckwheat'],
+                l2:['교맥','소바'] },
+  '새우':     { l1:['새우','shrimp','prawn'],
+                l2:['건새우','새우분말','새우젓','갑각류'] },
+  '게':       { l1:['게살','꽃게','대게','king crab','crab'],
+                l2:['게','킹크랩','게분말'] },
+  '복숭아':   { l1:['복숭아','peach'],
+                l2:['복숭아즙','복숭아향','복숭아농축액'] },
+  '토마토':   { l1:['토마토','tomato'],
+                l2:['토마토페이스트','토마토분말','토마토케첩','토마토소스','토마토퓨레'] },
+  '호두':     { l1:['호두','walnut'],
+                l2:['호두분','호두유'] },
+  '잣':       { l1:['잣','pine nut','pine nuts'],
+                l2:['잣분','잣기름'] },
+  '고등어':   { l1:['고등어','mackerel'],
+                l2:['고등어분','고등어오일'] },
+  '오징어':   { l1:['오징어','squid'],
+                l2:['오징어먹물','건오징어','오징어분'] },
+  '굴':       { l1:['굴','oyster'],
+                l2:['굴소스','굴분','굴추출물'] },
+  '조개류':   { l1:['조개','홍합','전복','바지락'],
+                l2:['clam','mussel','abalone','조개분'] },
+  '쇠고기':   { l1:['쇠고기','소고기','우육','beef'],
+                l2:['소기름','우지','소갈비','우골'] },
+  '돼지고기': { l1:['돼지고기','돈육','pork'],
+                l2:['라드','돼지','베이컨','햄','돼지기름'] },
+  '닭고기':   { l1:['닭고기','닭','chicken','계육'],
+                l2:['닭고기분','치킨','계육'] },
+  '아황산류': { l1:['아황산','이산화황','sulfite','sulphite'],
+                l2:['아황산나트륨','메타중아황산칼륨','so2'] },
+};
+
+var PRESETS = Object.keys(ADATA);
+
+// ══ Storage ═══════════════════════════════════════════════
+function ld(k, def) { try { return JSON.parse(localStorage.getItem(k)) || def; } catch(e) { return def; } }
+function sv(k, v)   { localStorage.setItem(k, JSON.stringify(v)); }
+
+var myA   = ld('ac_allergens', []);
+var memos = ld('ac_memos', []);
+
+// ══ Tab switching ══════════════════════════════════════════
+function goTab(name) {
+  ['allergy','check','memo'].forEach(function(t) {
+    document.getElementById('tab-'+t).classList.toggle('active', t === name);
+    document.getElementById('tbtn-'+t).classList.toggle('on', t === name);
+  });
+  if (name === 'check') { document.getElementById('noBanner').style.display = myA.length === 0 ? 'block' : 'none'; }
+  if (name === 'memo')  { renderMemos(); }
+}
+
+// ══ Tab 1: Allergen management ════════════════════════════
+function renderPresets() {
+  var g = document.getElementById('presetGrid');
+  g.innerHTML = '';
+  PRESETS.forEach(function(p) {
+    var d = document.createElement('div');
+    d.className = 'chip' + (myA.indexOf(p) >= 0 ? ' on' : '');
+    d.textContent = p;
+    d.onclick = function() { togglePreset(p); };
+    g.appendChild(d);
+  });
+}
+
+function togglePreset(p) {
+  var i = myA.indexOf(p);
+  if (i >= 0) myA.splice(i, 1); else myA.push(p);
+  sv('ac_allergens', myA);
+  renderPresets(); renderTags();
+}
+
+function renderTags() {
+  var row = document.getElementById('myTagsRow');
+  var msg = document.getElementById('emptyAllergenMsg');
+  row.innerHTML = '';
+  msg.style.display = myA.length === 0 ? 'block' : 'none';
+  myA.forEach(function(a) {
+    var t = document.createElement('div');
+    t.className = 'a-tag';
+    t.innerHTML = esc(a) + '<button onclick="removeA(\'' + esc(a) + '\')">×</button>';
+    row.appendChild(t);
+  });
+}
+
+function removeA(a) {
+  myA = myA.filter(function(x) { return x !== a; });
+  sv('ac_allergens', myA);
+  renderPresets(); renderTags();
+}
+
+function addCustom() {
+  var el = document.getElementById('customInput');
+  var raw = el.value.trim();
+  if (!raw) return;
+  raw.split(/[,，、\s]+/).map(function(s) { return s.trim(); }).filter(Boolean).forEach(function(s) {
+    if (myA.indexOf(s) < 0) myA.push(s);
+  });
+  sv('ac_allergens', myA);
+  el.value = '';
+  renderPresets(); renderTags();
+}
+
+document.getElementById('customInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addCustom();
+});
+
+// ══ Tab 2: Ingredient check ════════════════════════════════
+function getSyns(allergen) {
+  if (ADATA[allergen]) return { l1: ADATA[allergen].l1, l2: ADATA[allergen].l2 };
+  return { l1: [allergen], l2: [] };
+}
+
+function doCheck() {
+  var txt = document.getElementById('ingInput').value.trim();
+  if (!txt) { alert('성분표를 먼저 입력해 주세요.'); return; }
+  if (myA.length === 0) { alert('내 알레르기를 먼저 등록해 주세요.'); return; }
+
+  var low = txt.toLowerCase();
+  var dangerHits = [], warnHits = [], allTriggers = [];
+
+  myA.forEach(function(a) {
+    var syns = getSyns(a);
+    var fl1 = syns.l1.filter(function(s) { return low.includes(s.toLowerCase()); });
+    var fl2 = syns.l2.filter(function(s) { return low.includes(s.toLowerCase()); });
+
+    if (fl1.length > 0) {
+      dangerHits.push({ allergen: a, found: fl1 });
+      fl1.forEach(function(s) { allTriggers.push(s); });
+    } else if (fl2.length > 0) {
+      warnHits.push({ allergen: a, found: fl2 });
+      fl2.forEach(function(s) { allTriggers.push(s); });
+    }
+  });
+
+  var level = dangerHits.length > 0 ? 'danger' : warnHits.length > 0 ? 'warn' : 'safe';
+  renderResult(txt, level, dangerHits, warnHits, allTriggers);
+}
+
+function renderResult(txt, level, dangerHits, warnHits, triggers) {
+  var meta = {
+    safe:   { icon:'✅', lvl:'안전',      msg:'위험 성분이 검출되지 않았어요' },
+    warn:   { icon:'⚠️', lvl:'주의 필요', msg:'간접 관련 성분이 포함될 수 있어요' },
+    danger: { icon:'🚨', lvl:'위험',      msg:'알레르기 유발 성분이 포함되어 있어요!' },
+  };
+  var m = meta[level];
+
+  var html = '<div class="result-box ' + level + '">';
+  html += '<div class="result-icon">' + m.icon + '</div>';
+  html += '<div class="result-level">' + m.lvl + '</div>';
+  html += '<div class="result-msg">' + m.msg + '</div>';
+
+  var allHits = dangerHits.concat(warnHits);
+  if (allHits.length > 0) {
+    html += '<div class="hit-list">';
+    allHits.forEach(function(h) {
+      html += '<div class="hit-item">';
+      html += '<div class="hit-allergen">' + esc(h.allergen) + '</div>';
+      html += '<div class="hit-found">감지: ';
+      html += h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ');
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+
+  // Highlighted ingredient text
+  var highlighted = esc(txt);
+  triggers.sort(function(a,b) { return b.length - a.length; });
+  triggers.forEach(function(t) {
+    var re = new RegExp('(' + escRe(esc(t)) + ')', 'gi');
+    highlighted = highlighted.replace(re, '<mark class="hl">$1</mark>');
+  });
+
+  html += '<div class="card"><div class="card-title">📄 성분표 원문 (위험 성분 표시)</div>';
+  html += '<div class="ing-display">' + highlighted + '</div></div>';
+
+  if (level === 'safe') {
+    html += '<div class="safe-note">⚠️ 성분명이 다르게 표기될 수 있으니,<br>포장지 원문도 꼭 다시 확인해 주세요.</div>';
+  }
+
+  document.getElementById('resultArea').innerHTML = html;
+}
+
+// ══ Tab 3: Memo ════════════════════════════════════════════
+function toggleMemoForm() {
+  var f = document.getElementById('memoFormCard');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block') document.getElementById('memoName').focus();
+}
+
+function saveMemo() {
+  var name = document.getElementById('memoName').value.trim();
+  if (!name) { alert('음식 이름을 입력해 주세요.'); return; }
+  memos.unshift({ id: Date.now(), name: name,
+    status: document.getElementById('memoStatus').value,
+    note:   document.getElementById('memoNote').value.trim() });
+  sv('ac_memos', memos);
+  document.getElementById('memoName').value = '';
+  document.getElementById('memoNote').value = '';
+  document.getElementById('memoFormCard').style.display = 'none';
+  renderMemos();
+}
+
+function deleteMemo(id) {
+  if (!confirm('삭제할까요?')) return;
+  memos = memos.filter(function(m) { return m.id !== id; });
+  sv('ac_memos', memos);
+  renderMemos();
+}
+
+function renderMemos() {
+  var container = document.getElementById('memoList');
+  if (memos.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📒</div>아직 기록된 음식이 없어요.<br>먹어봤던 음식을 기록해 두세요!</div>';
+    return;
+  }
+
+  var groups = { danger:[], warn:[], todo:[], safe:[] };
+  memos.forEach(function(m) { (groups[m.status] || groups.todo).push(m); });
+
+  var gMeta = {
+    danger: '❌ 피해야 할 음식',
+    warn:   '⚠️ 주의 필요',
+    todo:   '📌 확인 예정',
+    safe:   '✅ 안전했던 음식',
+  };
+  var badgeLabel = { safe:'안전', warn:'주의', danger:'위험', todo:'확인 예정' };
+
+  var html = '';
+  ['danger','warn','todo','safe'].forEach(function(st) {
+    if (groups[st].length === 0) return;
+    html += '<div class="divider">' + gMeta[st] + '</div>';
+    groups[st].forEach(function(m) {
+      html += '<div class="memo-item">';
+      html += '<span class="m-dot ' + m.status + '"></span>';
+      html += '<div class="m-body">';
+      html += '<div class="m-name">' + esc(m.name) + '</div>';
+      if (m.note) html += '<div class="m-note">' + esc(m.note) + '</div>';
+      html += '</div>';
+      html += '<span class="m-badge ' + m.status + '">' + badgeLabel[m.status] + '</span>';
+      html += '<span class="m-del" onclick="deleteMemo(' + m.id + ')">🗑</span>';
+      html += '</div>';
+    });
+  });
+  container.innerHTML = html;
+}
+
+// ══ Utils ══════════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+// ══ Init ══════════════════════════════════════════════════
+renderPresets();
+renderTags();
+renderMemos();
+</script>
+</body>
+</html>
