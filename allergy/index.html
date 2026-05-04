@@ -684,7 +684,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.28</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.29</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -768,10 +768,10 @@
       </div>
 
       <!-- 버튼 + 가이드 2열 레이아웃 -->
-      <div style="display:flex;flex-direction:row;gap:10px;align-items:stretch;margin-bottom:4px;">
+      <div style="display:flex;flex-direction:row;gap:10px;align-items:stretch;margin-bottom:4px;justify-content:space-between;">
 
         <!-- 왼쪽: 카메라·붙여넣기 버튼 -->
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:0;">
+        <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:0;">
           <button class="btn-camera" style="margin-bottom:4px;" onclick="openCamera()">
             📷 카메라로<br>성분표 스캔하기
           </button>
@@ -781,7 +781,7 @@
         </div>
 
         <!-- 오른쪽: 촬영 가이드 -->
-        <div style="flex:0 0 130px;width:130px;background:#f8fafc;border:1.5px solid var(--border);border-radius:13px;padding:10px 9px;display:flex;flex-direction:column;gap:0;">
+        <div style="flex:0 0 120px;width:120px;margin-left:auto;background:#f8fafc;border:1.5px solid var(--border);border-radius:13px;padding:10px 9px;display:flex;flex-direction:column;gap:0;">
           <!-- SVG 패키지 일러스트 -->
           <svg style="display:block;width:100%;height:auto;margin-bottom:8px;" viewBox="0 0 88 90" xmlns="http://www.w3.org/2000/svg">
             <rect x="2" y="2" width="50" height="86" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
