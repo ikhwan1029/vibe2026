@@ -810,7 +810,7 @@
     <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
     <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
   </div>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.40</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.41</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -846,9 +846,10 @@
     <div class="card">
       <div class="card-title">✏️ 직접 추가</div>
       <div class="input-row">
-        <input type="text" id="customInput" placeholder="예: 고등어, peanut, 복숭아향..." />
+        <input type="text" id="customInput" placeholder="예: 매실, 참깨, 아몬드, 키위..." />
         <button class="btn btn-sm" onclick="addCustom()">추가</button>
       </div>
+      <div id="customRelatedHint" style="display:none;margin-top:9px;font-size:12px;line-height:1.6;color:#0369a1;background:#e0f2fe;border-radius:9px;padding:8px 11px;"></div>
     </div>
 
     <div class="card">
@@ -1116,6 +1117,41 @@ var ADATA = {
                 l2:['닭고기분','치킨','계육'] },
   '아황산류': { l1:['아황산','이산화황','sulfite','sulphite'],
                 l2:['아황산나트륨','메타중아황산칼륨','so2'] },
+};
+
+// ══ 커스텀 알레르기 관련 성분 ═══════════════════════════════
+// ADATA에 없는 식품을 직접 추가했을 때 관련 성분도 자동 검사
+var CUSTOM_RELATED = {
+  '매실':      { l1:['매실','매실청','매실즙','매실원액'],          l2:['청매실','청매실추출물','매실농축액','우메보시'] },
+  '키위':      { l1:['키위','키위즙'],                              l2:['키위농축액','키위분말','키위추출물','kiwi'] },
+  '딸기':      { l1:['딸기','딸기즙'],                              l2:['딸기농축액','딸기분말','딸기향','딸기추출물','strawberry'] },
+  '사과':      { l1:['사과','사과즙'],                              l2:['사과농축액','사과분말','사과추출물','apple'] },
+  '배':        { l1:['배','배즙'],                                  l2:['배농축액','배분말','배추출물','pear'] },
+  '포도':      { l1:['포도','포도즙'],                              l2:['포도농축액','포도씨추출물','grape'] },
+  '바나나':    { l1:['바나나','바나나즙'],                          l2:['바나나농축액','바나나분말','banana'] },
+  '자두':      { l1:['자두','자두즙'],                              l2:['자두농축액','자두향','plum'] },
+  '살구':      { l1:['살구','살구즙'],                              l2:['살구농축액','살구향','행인','apricot'] },
+  '체리':      { l1:['체리','체리즙'],                              l2:['체리농축액','버찌','cherry'] },
+  '망고':      { l1:['망고','망고즙'],                              l2:['망고퓨레','망고농축액','망고분말','mango'] },
+  '파인애플':  { l1:['파인애플','파인애플즙'],                      l2:['파인애플농축액','파인애플향','아나나스','pineapple'] },
+  '수박':      { l1:['수박','수박즙'],                              l2:['수박농축액','수박추출물'] },
+  '참외':      { l1:['참외','참외즙'],                              l2:['참외농축액'] },
+  '참깨':      { l1:['참깨','참기름'],                              l2:['참깨분','깨소금','참깨오일','sesame'] },
+  '들깨':      { l1:['들깨','들기름'],                              l2:['들깨분','들깨가루','perilla'] },
+  '아몬드':    { l1:['아몬드','almond'],                            l2:['아몬드분','아몬드오일','아몬드밀크','아몬드향'] },
+  '캐슈넛':    { l1:['캐슈넛','캐슈너트','cashew'],                 l2:['캐슈분','캐슈오일'] },
+  '피스타치오':{ l1:['피스타치오','pistachio'],                     l2:['피스타치오분','피스타치오오일'] },
+  '헤이즐넛':  { l1:['헤이즐넛','hazelnut'],                        l2:['헤이즐넛분','헤이즐넛오일','헤이즐넛향'] },
+  '마카다미아': { l1:['마카다미아','macadamia'],                    l2:['마카다미아분','마카다미아오일'] },
+  '겨자':      { l1:['겨자','머스터드','mustard'],                  l2:['겨자씨','겨자분','황겨자','흑겨자','겨자오일'] },
+  '셀러리':    { l1:['셀러리','celery'],                            l2:['셀러리씨','셀러리분','셀러리추출물','셀러리향'] },
+  '연어':      { l1:['연어','salmon'],                              l2:['연어오일','연어분','훈제연어','연어추출물'] },
+  '참치':      { l1:['참치','다랑어','tuna'],                       l2:['참치분','참치오일','참치추출물','가다랑어'] },
+  '전복':      { l1:['전복','abalone'],                             l2:['전복추출물','건전복','전복분'] },
+  '홍합':      { l1:['홍합','mussel'],                              l2:['홍합추출물','홍합분','홍합즙'] },
+  '가리비':    { l1:['가리비','scallop'],                           l2:['가리비추출물','가리비분'] },
+  '낙지':      { l1:['낙지'],                                       l2:['낙지추출물','건낙지'] },
+  '문어':      { l1:['문어','octopus'],                             l2:['문어추출물','건문어'] },
 };
 
 // ══ 성분 위험 이유 ══════════════════════════════════════════
@@ -1395,7 +1431,7 @@ function renderSynsList() {
   card.style.display = 'block';
   var html = '';
   myA.forEach(function(a) {
-    var d = ADATA[a];
+    var d = ADATA[a] || CUSTOM_RELATED[a];
     var all = d ? d.l1.concat(d.l2) : [a];
     html += '<div class="syns-row">';
     html += '<span class="syns-label">' + esc(a) + '</span>';
@@ -1415,12 +1451,31 @@ function addCustom() {
   var el = document.getElementById('customInput');
   var raw = el.value.trim();
   if (!raw) return;
+  var added = [];
   raw.split(/[,，、\s]+/).map(function(s) { return s.trim(); }).filter(Boolean).forEach(function(s) {
-    if (myA.indexOf(s) < 0) myA.push(s);
+    if (myA.indexOf(s) < 0) { myA.push(s); added.push(s); }
   });
   sv('ac_allergens', myA);
   el.value = '';
   renderPresets(); renderTags();
+
+  // 관련 성분 안내
+  var hint = document.getElementById('customRelatedHint');
+  if (!hint) return;
+  var relatedParts = [];
+  added.forEach(function(s) {
+    var d = CUSTOM_RELATED[s] || (ADATA[s] ? ADATA[s] : null);
+    if (d) {
+      var all = d.l1.concat(d.l2).filter(function(t) { return t !== s; });
+      if (all.length > 0) relatedParts.push('<strong>' + esc(s) + '</strong>: ' + all.slice(0, 6).map(esc).join(', ') + (all.length > 6 ? ' 등' : ''));
+    }
+  });
+  if (relatedParts.length > 0) {
+    hint.innerHTML = '✅ 관련 성분도 자동 검사해요 — ' + relatedParts.join(' / ');
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+  }
 }
 
 document.getElementById('customInput').addEventListener('keydown', function(e) {
@@ -1477,6 +1532,7 @@ document.getElementById('ingInput').addEventListener('paste', function(e) {
 // ══ Tab 2: Ingredient check ════════════════════════════════
 function getSyns(allergen) {
   if (ADATA[allergen]) return { l1: ADATA[allergen].l1, l2: ADATA[allergen].l2 };
+  if (CUSTOM_RELATED[allergen]) return { l1: CUSTOM_RELATED[allergen].l1, l2: CUSTOM_RELATED[allergen].l2 };
   return { l1: [allergen], l2: [] };
 }
 
