@@ -484,7 +484,7 @@
         </div>
         <div class="guide-step">
           <div class="guide-num">2</div>
-          <div class="guide-text"><strong>성분 확인 탭</strong>에서 성분표를 붙여넣거나<br>카메라로 촬영하세요</div>
+          <div class="guide-text"><strong>성분 확인 탭에서</strong> 성분표를 붙여넣거나 촬영하세요</div>
         </div>
         <div class="guide-step">
           <div class="guide-num">3</div>
@@ -495,7 +495,7 @@
     </div>
 
     <div class="card">
-      <div class="card-title">⚠️ 자주 쓰는 알레르기 선택</div>
+      <div class="card-title">내 알레르기 선택</div>
       <div class="chip-grid" id="presetGrid"></div>
     </div>
 
@@ -515,10 +515,10 @@
       </p>
     </div>
 
-    <button class="btn-share" onclick="shareLink()">🔗 보호자에게 공유하기</button>
-    <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:5px;line-height:1.5;">
-      내 알레르기 목록을 보호자·선생님에게 링크로 보내드릴 수 있어요
-    </p>
+    <div id="shareSection">
+      <button id="shareBtn" class="btn-share" onclick="shareLink()">🔗 보호자에게 공유하기</button>
+      <p id="shareHint" style="font-size:12px;color:var(--muted);text-align:center;margin-top:5px;line-height:1.5;"></p>
+    </div>
     <p class="foot-note">데이터는 이 기기에만 저장됩니다</p>
   </div>
 
@@ -563,7 +563,7 @@
 
         <!-- Progress bar (shown while OCR runs) -->
         <div id="ocrStatusArea" class="ocr-status-bar" style="display:none">
-          <div id="ocrStatusText" class="ocr-status-text">준비 중...</div>
+          <div id="ocrStatusText" class="ocr-status-text">이미지를 선택하면 인식이 시작됩니다</div>
           <div class="ocr-bar-bg"><div id="ocrBarFill" class="ocr-bar-fill"></div></div>
           <button id="addMoreBtn" class="btn-add-more" onclick="addMorePhoto()" style="display:none">
             📷 이어서 더 찍기 <span style="font-size:11px;opacity:0.7">(성분표가 긴 경우)</span>
@@ -848,6 +848,17 @@ function renderTags() {
   row.innerHTML = '';
   msg.style.display = myA.length === 0 ? 'block' : 'none';
   if (guide) guide.style.display = (myA.length === 0 && Date.now() >= hiddenUntil) ? 'block' : 'none';
+
+  var shareBtn  = document.getElementById('shareBtn');
+  var shareHint = document.getElementById('shareHint');
+  if (shareBtn) {
+    var has = myA.length > 0;
+    shareBtn.style.opacity       = has ? '1' : '0.4';
+    shareBtn.style.pointerEvents = has ? '' : 'none';
+    shareHint.textContent = has
+      ? '내 알레르기 목록을 보호자·선생님에게 링크로 보내드릴 수 있어요'
+      : '알레르기를 1개 이상 등록하면 보호자·선생님에게 공유할 수 있어요';
+  }
   myA.forEach(function(a) {
     var t = document.createElement('div');
     t.className = 'a-tag';
@@ -948,39 +959,49 @@ function doCheck() {
 }
 
 function renderResult(txt, level, dangerHits, warnHits, triggers) {
-  var meta = {
-    safe:   { icon:'✅', lvl:'안전 가능성 높음', msg:'위험 성분이 검출되지 않았어요' },
-    warn:   { icon:'⚠️', lvl:'주의 필요',        msg:'간접 관련 성분이 포함될 수 있어요' },
-    danger: { icon:'🚨', lvl:'위험 성분 포함',   msg:'지금 당장 섭취를 피해 주세요!' },
-  };
-  var m = meta[level];
-
   var html = '<div class="result-box ' + level + '">';
-  html += '<div class="result-icon">' + m.icon + '</div>';
-  html += '<div class="result-level">' + m.lvl + '</div>';
-  html += '<div class="result-msg">' + m.msg + '</div>';
 
-  if (level === 'danger' && dangerHits.length > 0) {
-    html += '<div class="danger-count">🔴 위험 알레르기 ' + dangerHits.length + '종 발견</div>';
-  }
-
-  var allHits = dangerHits.concat(warnHits);
-  if (allHits.length > 0) {
+  if (level === 'danger') {
+    html += '<div class="result-icon">🚨</div>';
+    html += '<div class="result-level">위험 성분 발견</div>';
+    html += '<div class="result-msg">등록한 알레르기 성분이 포함되어 있어요</div>';
     html += '<div class="hit-list">';
     dangerHits.forEach(function(h) {
       html += '<div class="hit-item d-hit">';
       html += '<div class="hit-allergen">🚨 ' + esc(h.allergen) + '</div>';
-      html += '<div class="hit-found">성분표에서 발견: ';
-      html += h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ');
-      html += '</div></div>';
+      html += '<div class="hit-found">검출: ' + h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ') + '</div>';
+      html += '</div>';
     });
     warnHits.forEach(function(h) {
       html += '<div class="hit-item w-hit">';
       html += '<div class="hit-allergen">⚠️ ' + esc(h.allergen) + '</div>';
-      html += '<div class="hit-found">간접 성분 발견: ';
-      html += h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ');
-      html += '</div></div>';
+      html += '<div class="hit-found">간접 성분: ' + h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ') + '</div>';
+      html += '</div>';
     });
+    html += '</div>';
+    html += '<div style="margin-top:14px;font-size:13px;font-weight:700;color:#991b1b;background:rgba(255,255,255,0.75);border-radius:10px;padding:10px 13px;line-height:1.7;">';
+    html += '섭취 전 제품 포장지와 보호자 또는 전문가의 확인이 필요합니다.';
+    html += '</div>';
+
+  } else if (level === 'warn') {
+    html += '<div class="result-icon">⚠️</div>';
+    html += '<div class="result-level">주의 필요</div>';
+    html += '<div class="result-msg">간접 관련 성분이 포함될 수 있어요</div>';
+    html += '<div class="hit-list">';
+    warnHits.forEach(function(h) {
+      html += '<div class="hit-item w-hit">';
+      html += '<div class="hit-allergen">⚠️ ' + esc(h.allergen) + '</div>';
+      html += '<div class="hit-found">간접 성분: ' + h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+  } else {
+    html += '<div class="result-icon">✅</div>';
+    html += '<div class="result-level">안전 가능성 높음</div>';
+    html += '<div class="result-msg">등록한 알레르기 성분은 발견되지 않았어요</div>';
+    html += '<div style="margin-top:12px;font-size:13px;color:#065f46;background:rgba(255,255,255,0.75);border-radius:10px;padding:10px 13px;line-height:1.7;">';
+    html += '하지만 제조 과정에서 교차 오염 가능성이 있으니<br>포장지의 알레르기 주의 문구도 함께 확인하세요.';
     html += '</div>';
   }
 
