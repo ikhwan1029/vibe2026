@@ -684,7 +684,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.29</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.30</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -758,7 +758,40 @@
       ⚠️ 먼저 <strong>내 알레르기</strong> 탭에서 피해야 할 성분을 등록해 주세요.
     </div>
 
-    <div class="card">
+    <!-- 카드 + 가이드 래퍼 (가이드가 카드 오른쪽으로 벗어남) -->
+    <div style="position:relative;">
+
+      <!-- 카드 오른쪽에 붙은 촬영 가이드 -->
+      <div style="position:absolute;left:calc(100% + 10px);top:0;width:120px;background:#f8fafc;border:1.5px solid var(--border);border-radius:13px;padding:10px 9px;display:flex;flex-direction:column;gap:0;z-index:10;">
+        <svg style="display:block;width:100%;height:auto;margin-bottom:8px;" viewBox="0 0 88 90" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="50" height="86" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+          <rect x="8" y="10" width="26" height="5" rx="2" fill="#94a3b8" opacity="0.5"/>
+          <rect x="10" y="19" width="20" height="3" rx="2" fill="#94a3b8" opacity="0.3"/>
+          <circle cx="27" cy="54" r="16" fill="#cbd5e1" opacity="0.4"/>
+          <circle cx="27" cy="54" r="10" fill="#94a3b8" opacity="0.22"/>
+          <line x1="52" y1="2" x2="52" y2="88" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2"/>
+          <rect x="53" y="2" width="33" height="86" rx="5" fill="#fef9c3" stroke="#f59e0b" stroke-width="2"/>
+          <text x="69" y="18" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#92400e" font-family="Arial,sans-serif">원재료명</text>
+          <line x1="56" y1="22" x2="83" y2="22" stroke="#f59e0b" stroke-width="1"/>
+          <rect x="57" y="27" width="21" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+          <rect x="57" y="33" width="23" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+          <rect x="57" y="39" width="19" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+          <rect x="57" y="45" width="22" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+          <rect x="57" y="51" width="18" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+          <rect x="57" y="57" width="21" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+          <defs><marker id="arr2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker></defs>
+          <line x1="38" y1="40" x2="51" y2="40" stroke="#ef4444" stroke-width="2" marker-end="url(#arr2)"/>
+          <rect x="3" y="33" width="34" height="12" rx="3" fill="#ef4444"/>
+          <text x="20" y="42" text-anchor="middle" font-size="6" fill="#fff" font-weight="bold" font-family="Arial,sans-serif">📸 이 부분!</text>
+        </svg>
+        <div style="font-size:10px;font-weight:800;color:var(--text);margin-bottom:6px;">어디를 찍을까요?</div>
+        <div class="shoot-step"><div class="shoot-step-num">1</div><span>뒷면·옆면 찾기</span></div>
+        <div class="shoot-step"><div class="shoot-step-num">2</div><span><strong>원재료명</strong> 찾기</span></div>
+        <div class="shoot-step"><div class="shoot-step-num">3</div><span>가까이·밝게 찍기</span></div>
+        <div class="shoot-step"><div class="shoot-step-num">4</div><span>반사·흔들림 주의</span></div>
+      </div>
+
+      <div class="card">
       <div class="card-title">📝 원재료명 입력</div>
 
       <!-- 인식 언어 선택 -->
@@ -767,53 +800,13 @@
         <div class="lang-row" id="langChipRow"></div>
       </div>
 
-      <!-- 버튼 + 가이드 2열 레이아웃 -->
-      <div style="display:flex;flex-direction:row;gap:10px;align-items:stretch;margin-bottom:4px;justify-content:space-between;">
-
-        <!-- 왼쪽: 카메라·붙여넣기 버튼 -->
-        <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:0;">
-          <button class="btn-camera" style="margin-bottom:4px;" onclick="openCamera()">
-            📷 카메라로<br>성분표 스캔하기
-          </button>
-          <button class="btn-paste" onclick="document.getElementById('pasteInput').click()">
-            📋 이미지<br>붙여넣기
-          </button>
-        </div>
-
-        <!-- 오른쪽: 촬영 가이드 -->
-        <div style="flex:0 0 120px;width:120px;margin-left:auto;background:#f8fafc;border:1.5px solid var(--border);border-radius:13px;padding:10px 9px;display:flex;flex-direction:column;gap:0;">
-          <!-- SVG 패키지 일러스트 -->
-          <svg style="display:block;width:100%;height:auto;margin-bottom:8px;" viewBox="0 0 88 90" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="50" height="86" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-            <rect x="8" y="10" width="26" height="5" rx="2" fill="#94a3b8" opacity="0.5"/>
-            <rect x="10" y="19" width="20" height="3" rx="2" fill="#94a3b8" opacity="0.3"/>
-            <circle cx="27" cy="54" r="16" fill="#cbd5e1" opacity="0.4"/>
-            <circle cx="27" cy="54" r="10" fill="#94a3b8" opacity="0.22"/>
-            <line x1="52" y1="2" x2="52" y2="88" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2"/>
-            <rect x="53" y="2" width="33" height="86" rx="5" fill="#fef9c3" stroke="#f59e0b" stroke-width="2"/>
-            <text x="69" y="18" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#92400e" font-family="Arial,sans-serif">원재료명</text>
-            <line x1="56" y1="22" x2="83" y2="22" stroke="#f59e0b" stroke-width="1"/>
-            <rect x="57" y="27" width="21" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-            <rect x="57" y="33" width="23" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-            <rect x="57" y="39" width="19" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-            <rect x="57" y="45" width="22" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-            <rect x="57" y="51" width="18" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-            <rect x="57" y="57" width="21" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-            <defs><marker id="arr2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker></defs>
-            <line x1="38" y1="40" x2="51" y2="40" stroke="#ef4444" stroke-width="2" marker-end="url(#arr2)"/>
-            <rect x="3" y="33" width="34" height="12" rx="3" fill="#ef4444"/>
-            <text x="20" y="42" text-anchor="middle" font-size="6" fill="#fff" font-weight="bold" font-family="Arial,sans-serif">📸 이 부분!</text>
-          </svg>
-
-          <!-- 단계 안내 -->
-          <div style="font-size:10px;font-weight:800;color:var(--text);margin-bottom:6px;">어디를 찍을까요?</div>
-          <div class="shoot-step"><div class="shoot-step-num">1</div><span>뒷면·옆면 찾기</span></div>
-          <div class="shoot-step"><div class="shoot-step-num">2</div><span><strong>원재료명</strong> 찾기</span></div>
-          <div class="shoot-step"><div class="shoot-step-num">3</div><span>가까이·밝게 찍기</span></div>
-          <div class="shoot-step"><div class="shoot-step-num">4</div><span>반사·흔들림 주의</span></div>
-        </div>
-
-      </div>
+      <!-- Camera scan -->
+      <button class="btn-camera" onclick="openCamera()">
+        📷 카메라로 성분표 스캔하기
+      </button>
+      <button class="btn-paste" onclick="document.getElementById('pasteInput').click()">
+        📋 이미지 붙여넣기 <span style="font-size:11px;opacity:0.7">(Ctrl+V · 스크린샷)</span>
+      </button>
       <input type="file" id="pasteInput" accept="image/*" style="display:none" />
 
       <!-- OCR wrap -->
@@ -878,6 +871,8 @@
       </div>
       <button class="btn btn-primary btn-full" onclick="doCheck()">🔍 성분 확인하기</button>
     </div>
+
+    </div><!-- /카드+가이드 래퍼 -->
 
     <div id="resultArea" class="result-wrap"></div>
 
