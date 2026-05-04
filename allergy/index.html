@@ -272,26 +272,15 @@
     .rotate-label { font-size: 11px; color: var(--muted); font-weight: 600; flex: 1; text-align: center; }
 
     /* ── 촬영 가이드 ── */
-    .shoot-guide {
-      display: flex; flex-direction: row; gap: 12px; align-items: flex-start;
-      background: #f8fafc; border: 1.5px solid var(--border);
-      border-radius: 14px; padding: 12px 13px; margin-bottom: 12px;
-    }
-    .shoot-guide-svg { flex: 0 0 72px; width: 72px; display: block; }
-    .shoot-guide-tips { flex: 1 1 0; min-width: 0; }
-    .shoot-guide-tips-title {
-      font-size: 12px; font-weight: 800; color: var(--text);
-      margin-bottom: 8px;
-    }
     .shoot-step {
-      display: flex; align-items: flex-start; gap: 7px;
-      margin-bottom: 7px; font-size: 12px; color: #475569; line-height: 1.4;
+      display: flex; align-items: flex-start; gap: 5px;
+      margin-bottom: 5px; font-size: 11px; color: #475569; line-height: 1.4;
     }
     .shoot-step:last-child { margin-bottom: 0; }
     .shoot-step-num {
-      width: 18px; height: 18px; flex-shrink: 0;
+      width: 16px; height: 16px; flex-shrink: 0;
       background: var(--primary); color: #fff; border-radius: 50%;
-      font-size: 10px; font-weight: 800;
+      font-size: 9px; font-weight: 800;
       display: flex; align-items: center; justify-content: center;
     }
 
@@ -695,7 +684,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.27</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.28</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -778,81 +767,53 @@
         <div class="lang-row" id="langChipRow"></div>
       </div>
 
-      <!-- 촬영 가이드 -->
-      <div class="shoot-guide">
-        <!-- SVG 가이드 이미지 -->
-        <svg style="display:block;flex-shrink:0;width:72px;height:auto" viewBox="0 0 88 130" xmlns="http://www.w3.org/2000/svg">
-          <!-- 앞면 패널 -->
-          <rect x="2" y="8" width="52" height="114" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-          <!-- 앞면: 로고 줄 -->
-          <rect x="10" y="18" width="32" height="6" rx="2" fill="#94a3b8" opacity="0.5"/>
-          <rect x="14" y="28" width="24" height="4" rx="2" fill="#94a3b8" opacity="0.3"/>
-          <!-- 앞면: 제품 이미지 원 -->
-          <circle cx="28" cy="76" r="22" fill="#cbd5e1" opacity="0.4"/>
-          <circle cx="28" cy="76" r="14" fill="#94a3b8" opacity="0.22"/>
+      <!-- 버튼 + 가이드 2열 레이아웃 -->
+      <div style="display:flex;flex-direction:row;gap:10px;align-items:stretch;margin-bottom:4px;">
 
-          <!-- 접힘선 (점선) -->
-          <line x1="54" y1="8" x2="54" y2="122" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2"/>
-
-          <!-- 오른쪽 측면 패널 (원재료명 영역) - 강조 -->
-          <rect x="55" y="8" width="31" height="114" rx="5" fill="#fef9c3" stroke="#f59e0b" stroke-width="2.5"/>
-          <!-- 원재료명 텍스트 -->
-          <text x="70" y="26" text-anchor="middle" font-size="5.8" font-weight="bold" fill="#92400e" font-family="Arial,sans-serif">원재료명</text>
-          <!-- 구분선 -->
-          <line x1="58" y1="30" x2="83" y2="30" stroke="#f59e0b" stroke-width="1"/>
-          <!-- 성분 줄 -->
-          <rect x="59" y="34" width="22" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="40" width="24" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="46" width="20" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="52" width="23" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="58" width="18" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="64" width="22" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="70" width="20" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="76" width="24" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-          <rect x="59" y="82" width="16" height="3" rx="1" fill="#d97706" opacity="0.4"/>
-
-          <!-- "이 부분!" 화살표 -->
-          <defs>
-            <marker id="arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-              <path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/>
-            </marker>
-          </defs>
-          <line x1="42" y1="50" x2="53" y2="50" stroke="#ef4444" stroke-width="2" marker-end="url(#arr)"/>
-
-          <!-- "이 부분!" 뱃지 (앞면 위) -->
-          <rect x="3" y="42" width="37" height="13" rx="3" fill="#ef4444"/>
-          <text x="21" y="52" text-anchor="middle" font-size="6.5" fill="#fff" font-weight="bold" font-family="Arial,sans-serif">📸 이 부분!</text>
-        </svg>
-
-        <!-- 텍스트 가이드 -->
-        <div class="shoot-guide-tips">
-          <div class="shoot-guide-tips-title">어디를 찍어야 할까요?</div>
-          <div class="shoot-step">
-            <div class="shoot-step-num">1</div>
-            <span>포장지 <strong>뒷면 또는 옆면</strong>을 찾아요</span>
-          </div>
-          <div class="shoot-step">
-            <div class="shoot-step-num">2</div>
-            <span><strong>원재료명</strong> 글자가 있는 부분을 찾아요</span>
-          </div>
-          <div class="shoot-step">
-            <div class="shoot-step-num">3</div>
-            <span>해당 부분만 <strong>가까이, 밝게</strong> 찍어요</span>
-          </div>
-          <div class="shoot-step">
-            <div class="shoot-step-num">4</div>
-            <span>글자가 보이도록 <strong>반사·흔들림</strong> 주의!</span>
-          </div>
+        <!-- 왼쪽: 카메라·붙여넣기 버튼 -->
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:0;">
+          <button class="btn-camera" style="margin-bottom:4px;" onclick="openCamera()">
+            📷 카메라로<br>성분표 스캔하기
+          </button>
+          <button class="btn-paste" onclick="document.getElementById('pasteInput').click()">
+            📋 이미지<br>붙여넣기
+          </button>
         </div>
-      </div>
 
-      <!-- Camera scan -->
-      <button class="btn-camera" onclick="openCamera()">
-        📷 카메라로 성분표 스캔하기
-      </button>
-      <button class="btn-paste" onclick="document.getElementById('pasteInput').click()">
-        📋 이미지 붙여넣기 <span style="font-size:11px;opacity:0.7">(Ctrl+V · 스크린샷)</span>
-      </button>
+        <!-- 오른쪽: 촬영 가이드 -->
+        <div style="flex:0 0 130px;width:130px;background:#f8fafc;border:1.5px solid var(--border);border-radius:13px;padding:10px 9px;display:flex;flex-direction:column;gap:0;">
+          <!-- SVG 패키지 일러스트 -->
+          <svg style="display:block;width:100%;height:auto;margin-bottom:8px;" viewBox="0 0 88 90" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="50" height="86" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+            <rect x="8" y="10" width="26" height="5" rx="2" fill="#94a3b8" opacity="0.5"/>
+            <rect x="10" y="19" width="20" height="3" rx="2" fill="#94a3b8" opacity="0.3"/>
+            <circle cx="27" cy="54" r="16" fill="#cbd5e1" opacity="0.4"/>
+            <circle cx="27" cy="54" r="10" fill="#94a3b8" opacity="0.22"/>
+            <line x1="52" y1="2" x2="52" y2="88" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2"/>
+            <rect x="53" y="2" width="33" height="86" rx="5" fill="#fef9c3" stroke="#f59e0b" stroke-width="2"/>
+            <text x="69" y="18" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#92400e" font-family="Arial,sans-serif">원재료명</text>
+            <line x1="56" y1="22" x2="83" y2="22" stroke="#f59e0b" stroke-width="1"/>
+            <rect x="57" y="27" width="21" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+            <rect x="57" y="33" width="23" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+            <rect x="57" y="39" width="19" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+            <rect x="57" y="45" width="22" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+            <rect x="57" y="51" width="18" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+            <rect x="57" y="57" width="21" height="3" rx="1" fill="#d97706" opacity="0.4"/>
+            <defs><marker id="arr2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker></defs>
+            <line x1="38" y1="40" x2="51" y2="40" stroke="#ef4444" stroke-width="2" marker-end="url(#arr2)"/>
+            <rect x="3" y="33" width="34" height="12" rx="3" fill="#ef4444"/>
+            <text x="20" y="42" text-anchor="middle" font-size="6" fill="#fff" font-weight="bold" font-family="Arial,sans-serif">📸 이 부분!</text>
+          </svg>
+
+          <!-- 단계 안내 -->
+          <div style="font-size:10px;font-weight:800;color:var(--text);margin-bottom:6px;">어디를 찍을까요?</div>
+          <div class="shoot-step"><div class="shoot-step-num">1</div><span>뒷면·옆면 찾기</span></div>
+          <div class="shoot-step"><div class="shoot-step-num">2</div><span><strong>원재료명</strong> 찾기</span></div>
+          <div class="shoot-step"><div class="shoot-step-num">3</div><span>가까이·밝게 찍기</span></div>
+          <div class="shoot-step"><div class="shoot-step-num">4</div><span>반사·흔들림 주의</span></div>
+        </div>
+
+      </div>
       <input type="file" id="pasteInput" accept="image/*" style="display:none" />
 
       <!-- OCR wrap -->
