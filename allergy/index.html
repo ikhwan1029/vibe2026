@@ -271,6 +271,30 @@
     .btn-rotate:active { background: #e2e8f0; }
     .rotate-label { font-size: 11px; color: var(--muted); font-weight: 600; flex: 1; text-align: center; }
 
+    /* ── 촬영 가이드 ── */
+    .shoot-guide {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: #f8fafc; border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 13px 14px; margin-bottom: 12px;
+    }
+    .shoot-guide-svg { flex-shrink: 0; width: 68px; }
+    .shoot-guide-tips { flex: 1; min-width: 0; }
+    .shoot-guide-tips-title {
+      font-size: 12px; font-weight: 800; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .shoot-step {
+      display: flex; align-items: flex-start; gap: 7px;
+      margin-bottom: 7px; font-size: 12px; color: #475569; line-height: 1.4;
+    }
+    .shoot-step:last-child { margin-bottom: 0; }
+    .shoot-step-num {
+      width: 18px; height: 18px; flex-shrink: 0;
+      background: var(--primary); color: #fff; border-radius: 50%;
+      font-size: 10px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+
     /* ── OCR 언어 선택 ── */
     .lang-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
     .lang-chip {
@@ -671,7 +695,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.24</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.25</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -752,6 +776,58 @@
       <div style="margin-bottom:10px;">
         <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">🌐 인식 언어 선택</div>
         <div class="lang-row" id="langChipRow"></div>
+      </div>
+
+      <!-- 촬영 가이드 -->
+      <div class="shoot-guide">
+        <!-- SVG 가이드 이미지 -->
+        <svg class="shoot-guide-svg" viewBox="0 0 68 148" xmlns="http://www.w3.org/2000/svg">
+          <!-- 패키지 외곽 -->
+          <rect x="2" y="2" width="64" height="144" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+          <!-- 앞면 브랜딩 영역 -->
+          <rect x="6" y="6" width="56" height="86" rx="4" fill="#e2e8f0"/>
+          <!-- 로고 자리 -->
+          <rect x="16" y="16" width="36" height="7" rx="2" fill="#94a3b8" opacity="0.55"/>
+          <rect x="20" y="27" width="28" height="4" rx="2" fill="#94a3b8" opacity="0.35"/>
+          <!-- 제품 이미지 자리 (원) -->
+          <circle cx="34" cy="60" r="18" fill="#cbd5e1" opacity="0.45"/>
+          <circle cx="34" cy="60" r="12" fill="#94a3b8" opacity="0.25"/>
+          <!-- 구분선 (점선) -->
+          <line x1="6" y1="96" x2="62" y2="96" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2.5"/>
+          <!-- 원재료명 영역 강조 -->
+          <rect x="6" y="100" width="56" height="40" rx="4" fill="#fef9c3" stroke="#f59e0b" stroke-width="2"/>
+          <!-- 원재료명 텍스트 -->
+          <text x="34" y="112" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#92400e" font-family="Arial,sans-serif">원재료명</text>
+          <text x="34" y="121" text-anchor="middle" font-size="4.8" fill="#92400e" font-family="Arial,sans-serif">밀가루, 설탕, 계란</text>
+          <text x="34" y="129" text-anchor="middle" font-size="4.8" fill="#92400e" font-family="Arial,sans-serif">우유, 대두유, 소맥분</text>
+          <text x="34" y="137" text-anchor="middle" font-size="4.8" fill="#92400e" font-family="Arial,sans-serif">식품첨가물(향료)...</text>
+          <!-- 카메라 아이콘 표시 -->
+          <text x="34" y="22" text-anchor="middle" font-size="7" fill="#0284c7" font-family="Arial,sans-serif" font-weight="bold" opacity="0">📷</text>
+          <!-- "이 부분!" 뱃지 -->
+          <rect x="5" y="98" width="38" height="12" rx="3" fill="#ef4444"/>
+          <text x="24" y="107" text-anchor="middle" font-size="6.5" fill="#fff" font-weight="bold" font-family="Arial,sans-serif">📸 이 부분!</text>
+        </svg>
+
+        <!-- 텍스트 가이드 -->
+        <div class="shoot-guide-tips">
+          <div class="shoot-guide-tips-title">어디를 찍어야 할까요?</div>
+          <div class="shoot-step">
+            <div class="shoot-step-num">1</div>
+            <span>포장지 <strong>뒷면 또는 옆면</strong>을 찾아요</span>
+          </div>
+          <div class="shoot-step">
+            <div class="shoot-step-num">2</div>
+            <span><strong>원재료명</strong> 글자가 있는 부분을 찾아요</span>
+          </div>
+          <div class="shoot-step">
+            <div class="shoot-step-num">3</div>
+            <span>해당 부분만 <strong>가까이, 밝게</strong> 찍어요</span>
+          </div>
+          <div class="shoot-step">
+            <div class="shoot-step-num">4</div>
+            <span>글자가 보이도록 <strong>반사·흔들림</strong> 주의!</span>
+          </div>
+        </div>
       </div>
 
       <!-- Camera scan -->
