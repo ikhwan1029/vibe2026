@@ -238,6 +238,23 @@
     .btn-crop-confirm { background: var(--primary); color: #fff; }
     .btn-crop-all     { background: #f1f5f9; color: var(--muted); border: 1.5px solid var(--border); }
 
+    /* 전처리 옵션 */
+    .prep-opt-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-top: 1px solid var(--border);
+    }
+    .btn-prep-opt {
+      padding: 5px 12px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: #f8fafc;
+      font-size: 12px; font-weight: 700; color: #475569;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-prep-opt.active { background: #fff7ed; border-color: #f97316; color: #c2410c; }
+    .prep-preview-label {
+      font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;
+    }
+    .prep-preview-hint { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+
     /* Status bar */
     .ocr-status-bar { padding: 10px 12px; background: #f8fafc; border-radius: 0 0 12px 12px; }
     .ocr-status-text { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
@@ -810,7 +827,7 @@
     <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
     <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
   </div>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.41</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.42</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -965,6 +982,20 @@
           <canvas id="cropCanvas"></canvas>
           <div class="crop-btn-row" style="padding:8px">
             <button class="btn btn-sm btn-crop-confirm" onclick="confirmCrop()">✅ 드래그 영역만 인식</button>
+          </div>
+          <div class="prep-opt-row">
+            <button class="btn-prep-opt" id="invertBtn" onclick="toggleInvert()">🔄 색 반전</button>
+            <span style="font-size:11px;color:var(--muted)">빨간 배경·흰 글씨 성분표에 사용</span>
+          </div>
+        </div>
+
+        <!-- 전처리 미리보기 -->
+        <div id="prepPreviewWrap" style="display:none;margin-top:8px">
+          <div class="card" style="padding:14px">
+            <div class="prep-preview-label">📸 전처리 미리보기 — OCR이 분석할 이미지</div>
+            <div class="prep-preview-hint">글자가 진하고 선명할수록 인식률이 높아요.<br>글씨가 흰색이면 🔄 색 반전을 켜고 다시 확인하세요.</div>
+            <canvas id="prepCanvas" style="width:100%;display:block;border-radius:8px;border:1px solid var(--border)"></canvas>
+            <button class="btn btn-primary" style="margin-top:12px;width:100%;padding:13px" onclick="startOCR(_pendingOCRCanvas)">🔍 OCR 인식 시작</button>
           </div>
         </div>
 
@@ -2017,9 +2048,11 @@ function loadImageFile(blob) {
   var wrap = document.getElementById('ocrPreviewWrap');
   wrap.style.display = 'block';
   document.getElementById('cropArea').style.display = 'block';
+  document.getElementById('prepPreviewWrap').style.display = 'none';
   document.getElementById('ocrStatusArea').style.display = 'none';
   document.getElementById('ocrFailPanel').style.display = 'none';
   document.getElementById('addMoreBtn').style.display = 'none';
+  _pendingOCRCanvas = null;
 
   var cropOrDrag = document.querySelector('.crop-or-drag');
   if (cropOrDrag) cropOrDrag.textContent = _appendMode
@@ -2158,14 +2191,13 @@ function cropPreset(zone) {
 
 function confirmCrop() {
   if (!_cRect || _cRect.w < 20 || _cRect.h < 10) { runOCRFull(); return; }
-  // Extract crop from full-res image
   var ex  = document.createElement('canvas');
   ex.width  = Math.max(1, Math.round(_cRect.w / _cScale));
   ex.height = Math.max(1, Math.round(_cRect.h / _cScale));
   ex.getContext('2d').drawImage(_cImg,
     _cRect.x / _cScale, _cRect.y / _cScale, ex.width, ex.height,
     0, 0, ex.width, ex.height);
-  startOCR(ex);
+  queueOCR(ex);
 }
 
 function runOCRFull() {
@@ -2173,12 +2205,40 @@ function runOCRFull() {
   ex.width  = _cImg.naturalWidth;
   ex.height = _cImg.naturalHeight;
   ex.getContext('2d').drawImage(_cImg, 0, 0);
-  startOCR(ex);
+  queueOCR(ex);
+}
+
+var _ocrInvert = false;
+var _pendingOCRCanvas = null;
+
+function toggleInvert() {
+  _ocrInvert = !_ocrInvert;
+  var btn = document.getElementById('invertBtn');
+  btn.classList.toggle('active', _ocrInvert);
+  btn.textContent = _ocrInvert ? '🔄 색 반전 ON' : '🔄 색 반전';
+  if (_pendingOCRCanvas) showPreprocessPreview(_pendingOCRCanvas);
+}
+
+function queueOCR(canvas) {
+  _pendingOCRCanvas = canvas;
+  showPreprocessPreview(canvas);
+}
+
+function showPreprocessPreview(srcCanvas) {
+  var processed = preprocessForOCR(srcCanvas);
+  var wrap = document.getElementById('prepPreviewWrap');
+  var pc   = document.getElementById('prepCanvas');
+  pc.width  = processed.width;
+  pc.height = processed.height;
+  pc.getContext('2d').drawImage(processed, 0, 0);
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function preprocessForOCR(srcCanvas) {
-  // 1단계: 그레이스케일 + 명암 대비 강화 (원본 크기)
   var w = srcCanvas.width, h = srcCanvas.height;
+
+  // 1단계: 그레이스케일 + 강한 대비 + 색 반전(옵션)
   var c1 = document.createElement('canvas');
   c1.width = w; c1.height = h;
   var ctx1 = c1.getContext('2d');
@@ -2187,26 +2247,52 @@ function preprocessForOCR(srcCanvas) {
   var d  = id.data;
   for (var i = 0; i < d.length; i += 4) {
     var g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-    g = Math.min(255, Math.max(0, (g - 128) * 2.2 + 128));
+    g = Math.min(255, Math.max(0, (g - 128) * 2.5 + 128));
+    if (_ocrInvert) g = 255 - g;
     d[i] = d[i+1] = d[i+2] = g;
   }
   ctx1.putImageData(id, 0, 0);
 
-  // 2단계: 2배 확대 (최대 4800px 제한)
-  var maxSide = Math.max(w, h);
-  var scale   = Math.min(2, 4800 / maxSide);
+  // 2단계: 샤픈 필터 (3×3 컨볼루션)
   var c2 = document.createElement('canvas');
-  c2.width  = Math.round(w * scale);
-  c2.height = Math.round(h * scale);
+  c2.width = w; c2.height = h;
   var ctx2 = c2.getContext('2d');
-  ctx2.imageSmoothingEnabled = true;
-  ctx2.imageSmoothingQuality = 'high';
-  ctx2.drawImage(c1, 0, 0, c2.width, c2.height);
-  return c2;
+  ctx2.drawImage(c1, 0, 0);
+  var src = ctx1.getImageData(0, 0, w, h);
+  var dst = ctx2.getImageData(0, 0, w, h);
+  var sd = src.data, dd = dst.data;
+  for (var y = 1; y < h - 1; y++) {
+    for (var x = 1; x < w - 1; x++) {
+      var idx = (y * w + x) * 4;
+      for (var ch = 0; ch < 3; ch++) {
+        var v = 5 * sd[idx + ch]
+              - sd[((y-1)*w + x    )*4 + ch]
+              - sd[((y+1)*w + x    )*4 + ch]
+              - sd[(y    *w + x - 1)*4 + ch]
+              - sd[(y    *w + x + 1)*4 + ch];
+        dd[idx + ch] = Math.min(255, Math.max(0, v));
+      }
+      dd[idx + 3] = 255;
+    }
+  }
+  ctx2.putImageData(dst, 0, 0);
+
+  // 3단계: 3배 확대 (최대 4800px 제한)
+  var maxSide = Math.max(w, h);
+  var scale   = Math.min(3, 4800 / maxSide);
+  var c3 = document.createElement('canvas');
+  c3.width  = Math.round(w * scale);
+  c3.height = Math.round(h * scale);
+  var ctx3 = c3.getContext('2d');
+  ctx3.imageSmoothingEnabled = true;
+  ctx3.imageSmoothingQuality = 'high';
+  ctx3.drawImage(c2, 0, 0, c3.width, c3.height);
+  return c3;
 }
 
 function startOCR(srcCanvas) {
   document.getElementById('cropArea').style.display = 'none';
+  document.getElementById('prepPreviewWrap').style.display = 'none';
   document.getElementById('ocrFailPanel').style.display = 'none';
   document.getElementById('ocrStatusArea').style.display = 'block';
   setOcrStatus('🖼️ 이미지 전처리 중... (그레이스케일·대비·2배 확대)', 5, 'var(--primary)');
