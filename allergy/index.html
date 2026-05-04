@@ -468,6 +468,49 @@
       border: 2px solid var(--border); cursor: pointer; font-family: inherit;
     }
 
+    /* ── 쉬운 화면 모드 토글 버튼 ── */
+    .easy-toggle {
+      position: absolute; bottom: 10px; right: 16px;
+      background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.92); border-radius: 8px;
+      padding: 4px 10px; font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: inherit; letter-spacing: 0.2px;
+    }
+    body.easy-mode .easy-toggle { background: rgba(255,255,255,0.35); }
+
+    /* ── 쉬운 화면 모드 ── */
+    body.easy-mode { font-size: 18px; }
+    body.easy-mode .header h1 { font-size: 22px; }
+    body.easy-mode .header p  { font-size: 14px; }
+    body.easy-mode .card-title { font-size: 13px; }
+    body.easy-mode .chip { font-size: 17px; padding: 9px 18px; }
+    body.easy-mode .a-tag { font-size: 16px; padding: 7px 10px 7px 16px; }
+    body.easy-mode input[type="text"], body.easy-mode textarea, body.easy-mode select {
+      font-size: 17px; padding: 14px 16px;
+    }
+    body.easy-mode textarea { min-height: 160px; }
+    body.easy-mode .btn { font-size: 18px; padding: 15px 22px; }
+    body.easy-mode .btn-camera, body.easy-mode .btn-paste { font-size: 17px; padding: 18px; }
+    body.easy-mode .btn-share { font-size: 16px; padding: 14px; }
+    body.easy-mode .result-icon { font-size: 72px; }
+    body.easy-mode .result-level { font-size: 14px; }
+    body.easy-mode .result-msg { font-size: 22px; }
+    body.easy-mode .hit-allergen { font-size: 18px; }
+    body.easy-mode .hit-found { font-size: 15px; }
+    body.easy-mode .hit-reason { font-size: 13px; }
+    body.easy-mode .t-btn { font-size: 12px; padding: 11px 0 9px; }
+    body.easy-mode .t-btn .ico { font-size: 28px; }
+    body.easy-mode .guide-text { font-size: 16px; line-height: 1.7; }
+    body.easy-mode .guide-num { width: 26px; height: 26px; font-size: 14px; }
+    body.easy-mode .rec-item { padding: 18px; }
+    body.easy-mode .rec-name-input { font-size: 16px; }
+    body.easy-mode .rec-badge { font-size: 13px; padding: 4px 13px; }
+    body.easy-mode .alt-name { font-size: 17px; }
+    body.easy-mode .alt-desc { font-size: 14px; }
+    body.easy-mode .syns-items { font-size: 15px; }
+    body.easy-mode .medical-note { font-size: 14px; }
+    body.easy-mode .info-banner { font-size: 15px; }
+
     /* ── Tab bar ── */
     .tab-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -495,7 +538,8 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.19</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.20</span>
+  <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
 <div class="content">
@@ -1090,12 +1134,13 @@ function doCheck() {
 }
 
 function renderResult(txt, level, dangerHits, warnHits, triggers) {
+  var easy = document.body.classList.contains('easy-mode');
   var html = '<div class="result-box ' + level + '">';
 
   if (level === 'danger') {
     html += '<div class="result-icon">🚨</div>';
-    html += '<div class="result-level">위험 성분 발견</div>';
-    html += '<div class="result-msg">등록한 알레르기 성분이 포함되어 있어요</div>';
+    html += '<div class="result-level">' + (easy ? '먹으면 안 돼요!' : '위험 성분 발견') + '</div>';
+    html += '<div class="result-msg">' + (easy ? '이 음식에는 알레르기 성분이 들어있어요' : '등록한 알레르기 성분이 포함되어 있어요') + '</div>';
     html += '<div class="hit-list">';
     dangerHits.forEach(function(h) {
       html += '<div class="hit-item d-hit">';
@@ -1124,8 +1169,8 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
 
   } else if (level === 'warn') {
     html += '<div class="result-icon">⚠️</div>';
-    html += '<div class="result-level">주의 필요</div>';
-    html += '<div class="result-msg">간접 관련 성분이 포함될 수 있어요</div>';
+    html += '<div class="result-level">' + (easy ? '조심하세요' : '주의 필요') + '</div>';
+    html += '<div class="result-msg">' + (easy ? '관련 성분이 들어있을 수 있어요' : '간접 관련 성분이 포함될 수 있어요') + '</div>';
     html += '<div class="hit-list">';
     warnHits.forEach(function(h) {
       html += '<div class="hit-item w-hit">';
@@ -1137,10 +1182,12 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
 
   } else {
     html += '<div class="result-icon">✅</div>';
-    html += '<div class="result-level">안전 가능성 높음</div>';
-    html += '<div class="result-msg">등록한 알레르기 성분은 발견되지 않았어요</div>';
-    html += '<div style="margin-top:12px;font-size:13px;color:#065f46;background:rgba(255,255,255,0.75);border-radius:10px;padding:10px 13px;line-height:1.7;">';
-    html += '하지만 제조 과정에서 교차 오염 가능성이 있으니<br>포장지의 알레르기 주의 문구도 함께 확인하세요.';
+    html += '<div class="result-level">' + (easy ? '괜찮아요!' : '안전 가능성 높음') + '</div>';
+    html += '<div class="result-msg">' + (easy ? '알레르기 성분이 없어요' : '등록한 알레르기 성분은 발견되지 않았어요') + '</div>';
+    html += '<div style="margin-top:12px;font-size:' + (easy?'15':'13') + 'px;color:#065f46;background:rgba(255,255,255,0.75);border-radius:10px;padding:10px 13px;line-height:1.7;">';
+    html += easy
+      ? '그래도 포장지에 알레르기 주의 표시가 있는지 꼭 확인하세요!'
+      : '하지만 제조 과정에서 교차 오염 가능성이 있으니<br>포장지의 알레르기 주의 문구도 함께 확인하세요.';
     html += '</div>';
   }
 
@@ -1627,11 +1674,27 @@ function setOcrStatus(msg, pct, color) {
   bar.style.background = color;
 }
 
+// ══ 쉬운 화면 모드 ════════════════════════════════════════
+function toggleEasyMode() {
+  var on = !document.body.classList.contains('easy-mode');
+  document.body.classList.toggle('easy-mode', on);
+  sv('ac_easy_mode', on);
+  document.getElementById('easyToggleBtn').textContent = on ? '🔤 일반 화면' : '🔡 쉬운 화면';
+}
+
+function initEasyMode() {
+  if (ld('ac_easy_mode', false)) {
+    document.body.classList.add('easy-mode');
+    document.getElementById('easyToggleBtn').textContent = '🔤 일반 화면';
+  }
+}
+
 // ══ Init ══════════════════════════════════════════════════
 renderPresets();
 renderTags();
 renderRecords();
 initShareView();
+initEasyMode();
 </script>
 </body>
 </html>
