@@ -273,12 +273,12 @@
 
     /* ── 촬영 가이드 ── */
     .shoot-guide {
-      display: flex; gap: 14px; align-items: flex-start;
+      display: flex; flex-direction: row; gap: 12px; align-items: flex-start;
       background: #f8fafc; border: 1.5px solid var(--border);
-      border-radius: 14px; padding: 13px 14px; margin-bottom: 12px;
+      border-radius: 14px; padding: 12px 13px; margin-bottom: 12px;
     }
-    .shoot-guide-svg { flex-shrink: 0; width: 88px; }
-    .shoot-guide-tips { flex: 1; min-width: 0; }
+    .shoot-guide-svg { flex: 0 0 72px; width: 72px; display: block; }
+    .shoot-guide-tips { flex: 1 1 0; min-width: 0; }
     .shoot-guide-tips-title {
       font-size: 12px; font-weight: 800; color: var(--text);
       margin-bottom: 8px;
@@ -695,7 +695,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.26</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.27</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -781,7 +781,7 @@
       <!-- 촬영 가이드 -->
       <div class="shoot-guide">
         <!-- SVG 가이드 이미지 -->
-        <svg class="shoot-guide-svg" viewBox="0 0 88 130" xmlns="http://www.w3.org/2000/svg">
+        <svg style="display:block;flex-shrink:0;width:72px;height:auto" viewBox="0 0 88 130" xmlns="http://www.w3.org/2000/svg">
           <!-- 앞면 패널 -->
           <rect x="2" y="8" width="52" height="114" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
           <!-- 앞면: 로고 줄 -->
