@@ -467,7 +467,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.13</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.15</span>
 </div>
 
 <div class="content">
@@ -1406,21 +1406,55 @@ function startOCR(srcCanvas) {
 }
 
 // OCR 결과 정제
+function reconstructKorean(text) {
+  // 낱글자로 흩어진 한글 음절을 단어로 복원 ("우 유" → "우유")
+  var tokens = text.split(/\s+/);
+  var out = [], buf = '';
+  tokens.forEach(function(tok) {
+    if (tok.length === 1 && /[가-힣]/.test(tok)) {
+      buf += tok;
+    } else {
+      if (buf) { out.push(buf); buf = ''; }
+      if (tok) out.push(tok);
+    }
+  });
+  if (buf) out.push(buf);
+  return out.join(' ');
+}
+
+function extractIngSection(text) {
+  // "원재료명" 이후 내용만 추출 (보관방법, 유통기한 등 앞까지)
+  var m = text.match(/원재료명\s*[：:﹕]?\s*(.+?)(?=내용량|유통기한|보관방법|영양성분|고객|불량|반품|제조|포장재|$)/is);
+  return m ? m[1].trim() : text;
+}
+
+function isNoiseLine(line) {
+  if (line.length < 2) return true;
+  // URL 제거
+  if (/https?:|www\.|\.co\.kr|\.com/i.test(line)) return true;
+  // 의미 있는 문자(한글·영문·콤마) 비율이 30% 미만이면 노이즈
+  var meaningful = (line.match(/[가-힣a-zA-Z,]/g) || []).length;
+  return line.replace(/\s/g, '').length > 4 && meaningful / line.replace(/\s/g, '').length < 0.30;
+}
+
 function cleanOCRText(raw) {
-  return raw
-    .replace(/\r/g, '')
+  // 1. 낱글자 한글 복원
+  var text = reconstructKorean(
+    raw.replace(/\r/g, '').replace(/[ㄱ-ㅎㅏ-ㅣ]/g, ' ')
+  );
+
+  // 2. 원재료명 섹션 추출 시도
+  text = extractIngSection(text);
+
+  // 3. 줄 단위 노이즈 필터 후 합치기
+  return text
     .split('\n')
     .map(function(l) { return l.trim(); })
-    .filter(function(l) { return l.length >= 2; })
-    .reduce(function(acc, line) {
-      if (!acc.length) { acc.push(line); return acc; }
-      var prev = acc[acc.length - 1];
-      if (/[,，.。\)）]$/.test(prev) || line.length > 4) acc.push(line);
-      else acc[acc.length - 1] = prev + line;
-      return acc;
-    }, [])
+    .filter(function(l) { return !isNoiseLine(l); })
     .join(' ')
-    .replace(/\|/g, '').replace(/ {2,}/g, ' ').trim();
+    .replace(/\|/g, '')
+    .replace(/ {2,}/g, ' ')
+    .trim();
 }
 
 function setOcrStatus(msg, pct, color) {
