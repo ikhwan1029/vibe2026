@@ -865,12 +865,18 @@ function doCheck() {
   if (myA.length === 0) { alert('내 알레르기를 먼저 등록해 주세요.'); return; }
 
   var low = txt.toLowerCase();
+  var lowNoSp = low.replace(/\s+/g, '');
   var dangerHits = [], warnHits = [], allTriggers = [];
+
+  function matches(s) {
+    var sl = s.toLowerCase();
+    return low.includes(sl) || lowNoSp.includes(sl.replace(/\s+/g, ''));
+  }
 
   myA.forEach(function(a) {
     var syns = getSyns(a);
-    var fl1 = syns.l1.filter(function(s) { return low.includes(s.toLowerCase()); });
-    var fl2 = syns.l2.filter(function(s) { return low.includes(s.toLowerCase()); });
+    var fl1 = syns.l1.filter(matches);
+    var fl2 = syns.l2.filter(matches);
 
     if (fl1.length > 0) {
       dangerHits.push({ allergen: a, found: fl1 });
@@ -925,11 +931,13 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
 
   html += '</div>';
 
-  // Highlighted ingredient text
+  // Highlighted ingredient text (글자 사이 공백 허용)
   var highlighted = esc(txt);
   triggers.sort(function(a,b) { return b.length - a.length; });
   triggers.forEach(function(t) {
-    var re = new RegExp('(' + escRe(esc(t)) + ')', 'gi');
+    var re = new RegExp('(' + esc(t).split('').map(function(c) {
+      return /\s/.test(c) ? '\\s+' : escRe(c);
+    }).join('\\s*') + ')', 'gi');
     highlighted = highlighted.replace(re, '<mark class="hl">$1</mark>');
   });
 
