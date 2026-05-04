@@ -442,6 +442,83 @@
       padding: 4px 8px; display: inline-block; line-height: 1.4;
     }
 
+    /* ── 오탐지 신고 ── */
+    .hit-found {
+      font-size: 12px; color: var(--muted);
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .btn-fp {
+      margin-left: auto; flex-shrink: 0;
+      background: none; border: 1.5px solid #e2e8f0;
+      border-radius: 7px; padding: 2px 7px;
+      font-size: 11px; font-weight: 700; color: #94a3b8;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-fp:active { background: #f1f5f9; }
+    .fp-done-row { opacity: 0.65; }
+    .fp-term-mark { text-decoration: line-through; color: #94a3b8; font-size: 12px; }
+    .fp-done-badge {
+      font-size: 10px; font-weight: 800; color: var(--safe);
+      background: #d1fae5; border-radius: 6px; padding: 2px 7px; flex-shrink: 0;
+    }
+    .fp-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.52);
+      display: flex; align-items: flex-end;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .fp-sheet {
+      background: #fff; width: 100%;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 28px;
+    }
+    .fp-handle {
+      width: 36px; height: 4px; background: #e2e8f0;
+      border-radius: 99px; margin: 0 auto 16px;
+    }
+    .fp-title  { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+    .fp-sub {
+      font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.6;
+      background: #f8fafc; border-radius: 10px; padding: 10px 13px;
+    }
+    .fp-sub strong { color: var(--text); }
+    .fp-reason-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+    .fp-reason-chip {
+      padding: 11px 14px; border-radius: 12px;
+      border: 2px solid var(--border); background: #fff;
+      font-size: 14px; font-weight: 600; color: var(--text);
+      cursor: pointer; font-family: inherit; text-align: left;
+      transition: all 0.12s;
+    }
+    .fp-reason-chip.on { border-color: var(--primary); background: #f0f9ff; color: #0284c7; }
+    .fp-btn-row { display: flex; gap: 10px; }
+    .fp-btn-submit {
+      flex: 1; padding: 13px; border-radius: 12px;
+      background: var(--danger); color: #fff;
+      font-size: 15px; font-weight: 700;
+      border: none; cursor: pointer; font-family: inherit;
+    }
+    .fp-btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .fp-btn-cancel {
+      padding: 13px 16px; border-radius: 12px;
+      background: #f1f5f9; color: var(--muted);
+      font-size: 14px; font-weight: 700;
+      border: 2px solid var(--border); cursor: pointer; font-family: inherit;
+    }
+    .fp-list-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .fp-list-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .fp-list-allergen {
+      font-weight: 800; color: #991b1b; flex-shrink: 0;
+      background: #fee2e2; border-radius: 999px; padding: 2px 9px; font-size: 11px;
+    }
+    .fp-list-term { flex: 1; color: var(--muted); font-weight: 600; }
+    .fp-list-reason { font-size: 11px; color: var(--muted); }
+    .fp-list-del { color: #cbd5e1; font-size: 17px; cursor: pointer; padding: 2px 4px; }
+    .fp-list-del:hover { color: var(--danger); }
+
     /* ── 보호자 공유 ── */
     .btn-share {
       width: 100%; margin-top: 10px; padding: 12px;
@@ -562,7 +639,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.21</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.22</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -614,6 +691,12 @@
     <div class="card" id="synsCard" style="display:none">
       <div class="card-title">🔍 이런 성분명을 검사해요</div>
       <div id="synsList"></div>
+    </div>
+
+    <div class="card" id="fpListCard" style="display:none">
+      <div class="card-title">🚩 내가 수정한 성분 목록</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">오탐으로 신고한 성분은 다음 검사부터 감지에서 제외돼요.</p>
+      <div id="fpListContainer"></div>
     </div>
 
     <div id="shareSection">
@@ -701,6 +784,22 @@
   </div>
 
 </div><!-- /content -->
+
+<!-- ── 오탐지 신고 시트 ── -->
+<div id="fpOverlay" class="fp-overlay" style="display:none" onclick="fpOverlayClick(event)">
+  <div class="fp-sheet">
+    <div class="fp-handle"></div>
+    <div class="fp-title">🚩 오탐지 신고</div>
+    <div class="fp-sub">
+      <strong id="fpAllergenText"></strong> 감지에서<br>"<span id="fpTermText" style="color:#dc2626;font-weight:800;"></span>"가 왜 잘못됐나요?
+    </div>
+    <div class="fp-reason-grid" id="fpReasonGrid"></div>
+    <div class="fp-btn-row">
+      <button class="fp-btn-submit" id="fpSubmitBtn" onclick="submitFP()" disabled>신고하기</button>
+      <button class="fp-btn-cancel" onclick="dismissFP()">취소</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── 보호자 공유 시트 ── -->
 <div id="shareOverlay" class="share-overlay" style="display:none" onclick="dismissShare(event)">
@@ -969,8 +1068,15 @@ var ALT = {
 function ld(k, def) { try { return JSON.parse(localStorage.getItem(k)) || def; } catch(e) { return def; } }
 function sv(k, v)   { localStorage.setItem(k, JSON.stringify(v)); }
 
-var myA     = ld('ac_allergens', []);
-var records = ld('ac_records', []);
+var myA       = ld('ac_allergens', []);
+var records   = ld('ac_records', []);
+var fpReports = ld('ac_fp', []);
+
+function isFPReported(allergen, term) {
+  return fpReports.some(function(r) {
+    return r.allergen === allergen && r.term.toLowerCase() === term.toLowerCase();
+  });
+}
 
 // ══ Tab switching ══════════════════════════════════════════
 function goTab(name) {
@@ -1138,8 +1244,8 @@ function doCheck() {
 
   myA.forEach(function(a) {
     var syns = getSyns(a);
-    var fl1 = syns.l1.filter(matches);
-    var fl2 = syns.l2.filter(matches);
+    var fl1 = syns.l1.filter(function(s) { return matches(s) && !isFPReported(a, s); });
+    var fl2 = syns.l2.filter(function(s) { return matches(s) && !isFPReported(a, s); });
 
     if (fl1.length > 0) {
       dangerHits.push({ allergen: a, found: fl1 });
@@ -1156,7 +1262,29 @@ function doCheck() {
   renderResult(txt, level, dangerHits, warnHits, allTriggers);
 }
 
+var _fpReg = {};
+var _fpIdx = 0;
+
+function fpHitRow(allergen, f, prefix) {
+  _fpIdx++;
+  var key = 'fp' + _fpIdx;
+  _fpReg[key] = { allergen: allergen, term: f, rowId: 'fprow_' + key };
+  var alreadyFP = fpReports.some(function(r) { return r.allergen === allergen && r.term.toLowerCase() === f.toLowerCase(); });
+  var html = '<div class="hit-found" id="fprow_' + key + '">';
+  if (prefix) html += '<span style="margin-right:2px">' + prefix + '</span>';
+  if (alreadyFP) {
+    html += '<span class="fp-term-mark">' + esc(f) + '</span>';
+    html += '<span class="fp-done-badge">🚩 신고됨</span>';
+  } else {
+    html += '<mark>' + esc(f) + '</mark>';
+    html += '<button class="btn-fp" onclick="openFP(\'' + key + '\')">🚩 오탐?</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
 function renderResult(txt, level, dangerHits, warnHits, triggers) {
+  _fpReg = {}; _fpIdx = 0;
   var easy = document.body.classList.contains('easy-mode');
   var html = '<div class="result-box ' + level + '">';
 
@@ -1170,7 +1298,7 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
       html += '<div class="hit-allergen">🚨 ' + esc(h.allergen) + '</div>';
       h.found.forEach(function(f) {
         var reason = REASON[f] || REASON[f.toLowerCase()];
-        html += '<div class="hit-found"><mark>' + esc(f) + '</mark></div>';
+        html += fpHitRow(h.allergen, f, null);
         if (reason) html += '<div class="hit-reason">💡 ' + esc(reason) + '</div>';
       });
       html += '</div>';
@@ -1180,7 +1308,7 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
       html += '<div class="hit-allergen">⚠️ ' + esc(h.allergen) + '</div>';
       h.found.forEach(function(f) {
         var reason = REASON[f] || REASON[f.toLowerCase()];
-        html += '<div class="hit-found">간접 성분: <mark>' + esc(f) + '</mark></div>';
+        html += fpHitRow(h.allergen, f, '간접 성분:');
         if (reason) html += '<div class="hit-reason">💡 ' + esc(reason) + '</div>';
       });
       html += '</div>';
@@ -1198,7 +1326,9 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
     warnHits.forEach(function(h) {
       html += '<div class="hit-item w-hit">';
       html += '<div class="hit-allergen">⚠️ ' + esc(h.allergen) + '</div>';
-      html += '<div class="hit-found">간접 성분: ' + h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ') + '</div>';
+      h.found.forEach(function(f) {
+        html += fpHitRow(h.allergen, f, '간접 성분:');
+      });
       html += '</div>';
     });
     html += '</div>';
@@ -1387,6 +1517,93 @@ function saveSharedAllergens() {
 function dismissShare(e) {
   if (e && e.target !== document.getElementById('shareOverlay')) return;
   document.getElementById('shareOverlay').style.display = 'none';
+}
+
+// ══ 오탐지 신고 ════════════════════════════════════════════
+var _fpKey    = null;
+var _fpReason = '';
+var FP_REASONS = [
+  { id:'ocr',     label:'📷 OCR이 잘못 읽었어요 (글자 인식 오류)' },
+  { id:'absent',  label:'🔍 이 성분이 실제로 없어요' },
+  { id:'unrelated', label:'✅ 내 알레르기와 무관한 성분이에요' },
+  { id:'other',   label:'📝 다른 이유' },
+];
+
+function openFP(key) {
+  var d = _fpReg[key];
+  if (!d) return;
+  _fpKey = key;
+  _fpReason = '';
+  document.getElementById('fpAllergenText').textContent = d.allergen;
+  document.getElementById('fpTermText').textContent = d.term;
+  document.getElementById('fpSubmitBtn').disabled = true;
+  renderFPReasonChips();
+  document.getElementById('fpOverlay').style.display = 'flex';
+}
+
+function renderFPReasonChips() {
+  var grid = document.getElementById('fpReasonGrid');
+  var html = '';
+  FP_REASONS.forEach(function(r) {
+    html += '<button class="fp-reason-chip' + (r.id === _fpReason ? ' on' : '') + '" onclick="selectFPReason(\'' + r.id + '\')">' + r.label + '</button>';
+  });
+  grid.innerHTML = html;
+}
+
+function selectFPReason(id) {
+  _fpReason = id;
+  renderFPReasonChips();
+  document.getElementById('fpSubmitBtn').disabled = false;
+}
+
+function submitFP() {
+  if (!_fpReason || !_fpKey) return;
+  var d = _fpReg[_fpKey];
+  if (!d) return;
+  var reasonLabel = (FP_REASONS.find(function(r) { return r.id === _fpReason; }) || {}).label || _fpReason;
+  fpReports.push({ allergen: d.allergen, term: d.term, reason: reasonLabel, ts: Date.now() });
+  sv('ac_fp', fpReports);
+  dismissFP();
+  var row = document.getElementById(d.rowId);
+  if (row) {
+    row.innerHTML = '<span class="fp-term-mark">' + esc(d.term) + '</span><span class="fp-done-badge">🚩 신고됨</span>';
+    row.classList.add('fp-done-row');
+  }
+  renderFPList();
+}
+
+function dismissFP() {
+  document.getElementById('fpOverlay').style.display = 'none';
+  _fpKey = null; _fpReason = '';
+}
+
+function fpOverlayClick(e) {
+  if (e.target === document.getElementById('fpOverlay')) dismissFP();
+}
+
+function renderFPList() {
+  var card      = document.getElementById('fpListCard');
+  var container = document.getElementById('fpListContainer');
+  if (!card || !container) return;
+  if (fpReports.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  var html = '';
+  fpReports.forEach(function(r, i) {
+    html += '<div class="fp-list-item">';
+    html += '<span class="fp-list-allergen">' + esc(r.allergen) + '</span>';
+    html += '<span class="fp-list-term">' + esc(r.term) + '</span>';
+    html += '<span class="fp-list-reason">' + esc(r.reason || '') + '</span>';
+    html += '<span class="fp-list-del" onclick="deleteFP(' + i + ')">🗑</span>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function deleteFP(i) {
+  if (!confirm('"' + fpReports[i].term + '" 신고를 취소할까요?\n다음 검사부터 다시 감지돼요.')) return;
+  fpReports.splice(i, 1);
+  sv('ac_fp', fpReports);
+  renderFPList();
 }
 
 // ══ Utils ══════════════════════════════════════════════════
@@ -1725,6 +1942,7 @@ function initEasyMode() {
 renderPresets();
 renderTags();
 renderRecords();
+renderFPList();
 initShareView();
 initEasyMode();
 </script>
