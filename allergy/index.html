@@ -675,6 +675,90 @@
     }
     .t-btn .ico { font-size: 22px; }
     .t-btn.on { color: var(--primary); }
+
+    /* ── 촬영 가이드 래퍼 (인라인 스타일 → 클래스) ── */
+    .shoot-guide-wrap { position: relative; }
+    .shoot-guide-panel {
+      position: absolute; left: calc(100% + 10px); top: 0; width: 180px;
+      background: #f8fafc; border: 1.5px solid var(--border);
+      border-radius: 16px; padding: 14px 13px;
+      display: flex; flex-direction: column; gap: 0;
+      z-index: 10; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .shoot-guide-steps { display: flex; flex-direction: column; }
+
+    /* ── PC 상단 탭 네비게이션 ── */
+    .pc-nav { display: none; gap: 8px; margin-top: 14px; }
+    .pc-nav-btn {
+      padding: 8px 20px; border-radius: 10px;
+      font-size: 14px; font-weight: 700;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85);
+      cursor: pointer; font-family: inherit; transition: all 0.13s;
+    }
+    .pc-nav-btn.on { background: rgba(255,255,255,0.95); color: #0284c7; }
+    .pc-nav-btn:hover:not(.on) { background: rgba(255,255,255,0.28); }
+
+    /* ══ PC 레이아웃 (≥ 900px) ════════════════════════════ */
+    body.pc { padding-bottom: 0; }
+    body.pc .header { padding: 20px 28px 20px; }
+    body.pc .header h1 { font-size: 22px; }
+    body.pc .pc-nav { display: flex; }
+
+    body.pc .content {
+      max-width: 1160px;
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      gap: 0 20px;
+      align-items: start;
+      padding: 20px 20px 36px;
+    }
+    /* 내 알레르기 → 왼쪽 사이드바, 항상 표시 */
+    body.pc #tab-allergy {
+      display: block !important;
+      grid-column: 1; grid-row: 1;
+      position: sticky; top: 140px;
+      max-height: calc(100vh - 160px);
+      overflow-y: auto;
+    }
+    /* 성분확인·기록·대체식품 → 오른쪽 컬럼 */
+    body.pc #tab-check,
+    body.pc #tab-memo,
+    body.pc #tab-alt { grid-column: 2; grid-row: 1; }
+    body.pc #tab-check:not(.active),
+    body.pc #tab-memo:not(.active),
+    body.pc #tab-alt:not(.active) { display: none !important; }
+
+    /* 하단 탭바 숨김 */
+    body.pc .tab-bar { display: none; }
+
+    /* PC: 촬영 가이드 인라인 가로 배치 */
+    body.pc .shoot-guide-wrap { position: static; }
+    body.pc .shoot-guide-panel {
+      position: static; width: 100%;
+      flex-direction: row; gap: 16px; margin-bottom: 14px;
+    }
+    body.pc .shoot-guide-panel svg {
+      width: 88px !important; height: auto !important;
+      margin-bottom: 0 !important; flex-shrink: 0; align-self: flex-start;
+    }
+    body.pc .shoot-guide-steps { flex: 1; }
+
+    /* PC: 오버레이 → 가운데 다이얼로그 */
+    body.pc .fp-overlay,
+    body.pc .share-overlay { align-items: center; justify-content: center; }
+    body.pc .fp-sheet,
+    body.pc .share-sheet { border-radius: 20px; width: 480px; max-width: 90vw; }
+
+    /* PC: 여백·폰트 */
+    body.pc .card { border-radius: 20px; padding: 20px; }
+    body.pc textarea { min-height: 180px; }
+    body.pc .ing-display { max-height: 260px; }
+    body.pc .result-box { padding: 28px 24px 22px; }
+    body.pc .result-icon { font-size: 50px; }
+    body.pc .result-msg  { font-size: 19px; }
+    body.pc .result-box.danger .result-icon { font-size: 64px; }
+    body.pc .result-box.danger .result-msg  { font-size: 22px; }
   </style>
 </head>
 <body>
@@ -684,7 +768,12 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.33</span>
+  <div class="pc-nav">
+    <button class="pc-nav-btn" id="pcbtn-check" onclick="goTab('check')">🔍 성분 확인</button>
+    <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
+    <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
+  </div>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.34</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -758,11 +847,11 @@
       ⚠️ 먼저 <strong>내 알레르기</strong> 탭에서 피해야 할 성분을 등록해 주세요.
     </div>
 
-    <!-- 카드 + 가이드 래퍼 (가이드가 카드 오른쪽으로 벗어남) -->
-    <div style="position:relative;">
+    <!-- 카드 + 가이드 래퍼 (PC: 인라인 / 모바일: 카드 오른쪽) -->
+    <div class="shoot-guide-wrap">
 
-      <!-- 카드 오른쪽에 붙은 촬영 가이드 -->
-      <div style="position:absolute;left:calc(100% + 10px);top:0;width:180px;background:#f8fafc;border:1.5px solid var(--border);border-radius:16px;padding:14px 13px;display:flex;flex-direction:column;gap:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+      <!-- 촬영 가이드 패널 -->
+      <div class="shoot-guide-panel">
         <svg style="display:block;width:100%;height:auto;margin-bottom:12px;" viewBox="0 0 88 90" xmlns="http://www.w3.org/2000/svg">
           <rect x="2" y="2" width="50" height="86" rx="5" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
           <rect x="8" y="10" width="26" height="5" rx="2" fill="#94a3b8" opacity="0.5"/>
@@ -784,21 +873,17 @@
           <rect x="3" y="33" width="34" height="12" rx="3" fill="#ef4444"/>
           <text x="20" y="42" text-anchor="middle" font-size="6" fill="#fff" font-weight="bold" font-family="Arial,sans-serif">📸 이 부분!</text>
         </svg>
-        <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:9px;">어디를 찍을까요?</div>
-        <div class="shoot-step"><div class="shoot-step-num">1</div><span>포장지 <strong>뒷면·옆면</strong> 찾기</span></div>
-        <div class="shoot-step"><div class="shoot-step-num">2</div><span><strong>원재료명</strong> 글자 찾기</span></div>
-        <div class="shoot-step"><div class="shoot-step-num">3</div><span><strong>가까이·밝게</strong> 찍기</span></div>
-        <div class="shoot-step"><div class="shoot-step-num">4</div><span>반사·흔들림 주의</span></div>
+        <div class="shoot-guide-steps">
+          <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:9px;">어디를 찍을까요?</div>
+          <div class="shoot-step"><div class="shoot-step-num">1</div><span>포장지 <strong>뒷면·옆면</strong> 찾기</span></div>
+          <div class="shoot-step"><div class="shoot-step-num">2</div><span><strong>원재료명</strong> 글자 찾기</span></div>
+          <div class="shoot-step"><div class="shoot-step-num">3</div><span><strong>가까이·밝게</strong> 찍기</span></div>
+          <div class="shoot-step"><div class="shoot-step-num">4</div><span>반사·흔들림 주의</span></div>
+        </div>
       </div>
 
       <div class="card">
       <div class="card-title">📝 원재료명 입력</div>
-
-      <!-- 인식 언어 선택 -->
-      <div style="margin-bottom:10px;">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">🌐 인식 언어 선택</div>
-        <div class="lang-row" id="langChipRow"></div>
-      </div>
 
       <!-- Camera scan -->
       <button class="btn-camera" onclick="openCamera()">
@@ -1189,6 +1274,8 @@ function goTab(name) {
   ['allergy','check','memo','alt'].forEach(function(t) {
     document.getElementById('tab-'+t).classList.toggle('active', t === name);
     document.getElementById('tbtn-'+t).classList.toggle('on', t === name);
+    var pcBtn = document.getElementById('pcbtn-'+t);
+    if (pcBtn) pcBtn.classList.toggle('on', t === name);
   });
   if (name === 'check') { document.getElementById('noBanner').style.display = myA.length === 0 ? 'block' : 'none'; }
   if (name === 'memo')  { renderRecords(); }
@@ -2132,11 +2219,22 @@ function initEasyMode() {
 // ══ Init ══════════════════════════════════════════════════
 renderPresets();
 renderTags();
-renderLangChips();
 renderRecords();
 renderFPList();
 initShareView();
 initEasyMode();
+
+// PC/모바일 자동 감지
+function detectPCLayout() {
+  var isPC = window.innerWidth >= 900;
+  document.body.classList.toggle('pc', isPC);
+  if (isPC) {
+    var cur = document.querySelector('#tab-check.active, #tab-memo.active, #tab-alt.active');
+    if (!cur) goTab('check');
+  }
+}
+detectPCLayout();
+window.addEventListener('resize', detectPCLayout);
 </script>
 </body>
 </html>
