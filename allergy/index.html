@@ -271,6 +271,26 @@
     .btn-rotate:active { background: #e2e8f0; }
     .rotate-label { font-size: 11px; color: var(--muted); font-weight: 600; flex: 1; text-align: center; }
 
+    /* ── OCR 실패 안내 ── */
+    .ocr-fail-panel {
+      padding: 12px 12px 14px;
+    }
+    .ocr-fail-card {
+      background: #fff7ed; border: 1.5px solid #fed7aa;
+      border-radius: 14px; padding: 16px;
+    }
+    .ocr-fail-icon  { font-size: 34px; margin-bottom: 6px; text-align: center; }
+    .ocr-fail-title { font-size: 15px; font-weight: 800; color: #9a3412; margin-bottom: 4px; }
+    .ocr-fail-sub   { font-size: 13px; color: #7c2d12; font-weight: 600; margin-bottom: 10px; }
+    .ocr-fail-tips  {
+      list-style: none; background: #fff; border-radius: 10px;
+      padding: 10px 14px; margin-bottom: 14px;
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .ocr-fail-tips li { font-size: 13px; color: #475569; }
+    .ocr-fail-btns { display: flex; flex-direction: column; gap: 8px; }
+    .ocr-fail-btns .btn { margin-top: 0; }
+
     /* ── Safe notice ── */
     .safe-note {
       font-size: 12px; color: var(--muted); text-align: center;
@@ -639,7 +659,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.22</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.23</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -753,6 +773,26 @@
             📷 이어서 더 찍기 <span style="font-size:11px;opacity:0.7">(성분표가 긴 경우)</span>
           </button>
         </div>
+
+      <!-- OCR 실패 패널 -->
+      <div id="ocrFailPanel" class="ocr-fail-panel" style="display:none">
+        <div class="ocr-fail-card">
+          <div class="ocr-fail-icon">😔</div>
+          <div class="ocr-fail-title">텍스트 인식이 잘 되지 않았어요</div>
+          <div class="ocr-fail-sub">다시 시도해보세요:</div>
+          <ul class="ocr-fail-tips">
+            <li>💡 더 밝은 곳에서 촬영하기</li>
+            <li>📏 성분표 부분만 가까이 찍기</li>
+            <li>🔆 반사 없는 각도로 찍기</li>
+            <li>✏️ 성분표를 직접 입력하기</li>
+          </ul>
+          <div class="ocr-fail-btns">
+            <button class="btn btn-primary btn-full" style="margin-top:0" onclick="openCamera()">📷 다시 찍기</button>
+            <button class="btn btn-sm btn-full" onclick="ocrFailManual()">✏️ 성분표 직접 입력하기</button>
+            <button class="btn btn-sm btn-full" onclick="ocrFailReselect()">✂️ 이미지에서 부분 다시 선택하기</button>
+          </div>
+        </div>
+      </div>
 
       </div>
 
@@ -1671,6 +1711,7 @@ function loadImageFile(blob) {
   wrap.style.display = 'block';
   document.getElementById('cropArea').style.display = 'block';
   document.getElementById('ocrStatusArea').style.display = 'none';
+  document.getElementById('ocrFailPanel').style.display = 'none';
   document.getElementById('addMoreBtn').style.display = 'none';
 
   document.querySelector('.crop-hint').textContent =
@@ -1809,35 +1850,50 @@ function runOCRFull() {
   startOCR(ex);
 }
 
-function startOCR(srcCanvas) {
-  document.getElementById('cropArea').style.display = 'none';
-  document.getElementById('ocrStatusArea').style.display = 'block';
-  setOcrStatus('🖼️ 이미지 전처리 중...', 5, 'var(--primary)');
-
-  // Grayscale + contrast on a new canvas
-  var canvas = document.createElement('canvas');
-  var maxSide = Math.max(srcCanvas.width, srcCanvas.height);
-  var scale   = maxSide < 1600 ? Math.min(3, 1600 / maxSide) : 1;
-  canvas.width  = Math.round(srcCanvas.width  * scale);
-  canvas.height = Math.round(srcCanvas.height * scale);
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(srcCanvas, 0, 0, canvas.width, canvas.height);
-  var id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+function preprocessForOCR(srcCanvas) {
+  // 1단계: 그레이스케일 + 명암 대비 강화 (원본 크기)
+  var w = srcCanvas.width, h = srcCanvas.height;
+  var c1 = document.createElement('canvas');
+  c1.width = w; c1.height = h;
+  var ctx1 = c1.getContext('2d');
+  ctx1.drawImage(srcCanvas, 0, 0);
+  var id = ctx1.getImageData(0, 0, w, h);
   var d  = id.data;
   for (var i = 0; i < d.length; i += 4) {
     var g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-    g = Math.min(255, Math.max(0, (g - 128) * 1.7 + 128));
+    g = Math.min(255, Math.max(0, (g - 128) * 2.2 + 128));
     d[i] = d[i+1] = d[i+2] = g;
   }
-  ctx.putImageData(id, 0, 0);
+  ctx1.putImageData(id, 0, 0);
+
+  // 2단계: 2배 확대 (최대 4800px 제한)
+  var maxSide = Math.max(w, h);
+  var scale   = Math.min(2, 4800 / maxSide);
+  var c2 = document.createElement('canvas');
+  c2.width  = Math.round(w * scale);
+  c2.height = Math.round(h * scale);
+  var ctx2 = c2.getContext('2d');
+  ctx2.imageSmoothingEnabled = true;
+  ctx2.imageSmoothingQuality = 'high';
+  ctx2.drawImage(c1, 0, 0, c2.width, c2.height);
+  return c2;
+}
+
+function startOCR(srcCanvas) {
+  document.getElementById('cropArea').style.display = 'none';
+  document.getElementById('ocrFailPanel').style.display = 'none';
+  document.getElementById('ocrStatusArea').style.display = 'block';
+  setOcrStatus('🖼️ 이미지 전처리 중... (그레이스케일·대비·2배 확대)', 5, 'var(--primary)');
+
+  var canvas = preprocessForOCR(srcCanvas);
 
   setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 시간이 걸려요)', 10, 'var(--primary)');
   Tesseract.recognize(canvas, 'kor+eng', {
     logger: function(m) {
-      if      (m.status === 'loading tesseract core')    setOcrStatus('📦 OCR 엔진 로딩 중...', 15, 'var(--primary)');
-      else if (m.status === 'initializing tesseract')    setOcrStatus('⚙️ OCR 초기화 중...', 25, 'var(--primary)');
+      if      (m.status === 'loading tesseract core')       setOcrStatus('📦 OCR 엔진 로딩 중...', 15, 'var(--primary)');
+      else if (m.status === 'initializing tesseract')       setOcrStatus('⚙️ OCR 초기화 중...', 25, 'var(--primary)');
       else if (m.status === 'loading language traineddata') setOcrStatus('📥 한국어 데이터 로딩 중...', 35, 'var(--primary)');
-      else if (m.status === 'initializing api')          setOcrStatus('🔧 분석 준비 중...', 50, 'var(--primary)');
+      else if (m.status === 'initializing api')             setOcrStatus('🔧 분석 준비 중...', 50, 'var(--primary)');
       else if (m.status === 'recognizing text') {
         var pct = Math.round(50 + m.progress * 48);
         setOcrStatus('🔍 텍스트 인식 중... ' + pct + '%', pct, 'var(--primary)');
@@ -1845,6 +1901,10 @@ function startOCR(srcCanvas) {
     }
   }).then(function(result) {
     var newText = cleanOCRText(result.data.text);
+    if (newText.trim().length < 15) {
+      showOCRFail();
+      return;
+    }
     var inp = document.getElementById('ingInput');
     if (_appendMode && inp.value.trim()) {
       inp.value = inp.value.trim() + ' ' + newText;
@@ -1860,8 +1920,29 @@ function startOCR(srcCanvas) {
     inp.focus();
   }).catch(function(err) {
     console.error(err);
-    setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
+    showOCRFail();
   });
+}
+
+function showOCRFail() {
+  document.getElementById('ocrStatusArea').style.display = 'none';
+  document.getElementById('ocrFailPanel').style.display = 'block';
+  document.getElementById('ocrFailPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function ocrFailManual() {
+  document.getElementById('ocrPreviewWrap').style.display = 'none';
+  document.getElementById('ocrFailPanel').style.display = 'none';
+  var inp = document.getElementById('ingInput');
+  inp.focus();
+  inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function ocrFailReselect() {
+  document.getElementById('ocrFailPanel').style.display = 'none';
+  document.getElementById('ocrStatusArea').style.display = 'none';
+  document.getElementById('cropArea').style.display = 'block';
+  document.getElementById('cropArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // OCR 결과 정제
