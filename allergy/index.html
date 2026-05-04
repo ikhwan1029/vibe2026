@@ -809,7 +809,7 @@
     <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
     <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
   </div>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.37</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.38</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -1872,7 +1872,7 @@ var OCR_LANG_OPTS = [
   { id:'chi_tra', label:'🇨🇳 중국어(번체)' },
 ];
 
-var ocrLangs = ld('ac_ocr_langs', ['kor','eng','jpn','chi_sim','chi_tra']);
+var ocrLangs = ['kor','eng'];
 
 function renderLangChips() {
   var row = document.getElementById('langChipRow');
