@@ -810,7 +810,7 @@
     <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
     <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
   </div>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.41</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.42</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -2205,14 +2205,26 @@ function preprocessForOCR(srcCanvas) {
   return c2;
 }
 
-function startOCR(srcCanvas) {
-  document.getElementById('cropArea').style.display = 'none';
-  document.getElementById('ocrFailPanel').style.display = 'none';
-  document.getElementById('ocrStatusArea').style.display = 'block';
+function applyOCRResult(newText, engine) {
+  var inp = document.getElementById('ingInput');
+  if (_appendMode && inp.value.trim()) {
+    inp.value = inp.value.trim() + ' ' + newText;
+  } else {
+    inp.value = newText;
+  }
+  _appendMode = false;
+  var label = engine === 'clova' ? '✅ AI 인식 완료! (Clova)' : '✅ 인식 완료! (Tesseract)';
+  setOcrStatus(label, 100, 'var(--safe)');
+  document.getElementById('addMoreBtn').style.display = 'block';
+  inp.classList.add('ocr-active');
+  document.getElementById('ocrEditHint').style.display = 'flex';
+  inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  inp.focus();
+}
+
+function runTesseract(srcCanvas) {
   setOcrStatus('🖼️ 이미지 전처리 중... (그레이스케일·대비·2배 확대)', 5, 'var(--primary)');
-
   var canvas = preprocessForOCR(srcCanvas);
-
   var langStr = ocrLangs.length > 0 ? ocrLangs.join('+') : 'kor';
   setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 시간이 걸려요)', 10, 'var(--primary)');
   Tesseract.recognize(canvas, langStr, {
@@ -2231,26 +2243,49 @@ function startOCR(srcCanvas) {
     }
   }).then(function(result) {
     var newText = cleanOCRText(result.data.text);
-    if (newText.trim().length < 15) {
-      showOCRFail();
-      return;
-    }
-    var inp = document.getElementById('ingInput');
-    if (_appendMode && inp.value.trim()) {
-      inp.value = inp.value.trim() + ' ' + newText;
-    } else {
-      inp.value = newText;
-    }
-    _appendMode = false;
-    setOcrStatus('✅ 인식 완료!', 100, 'var(--safe)');
-    document.getElementById('addMoreBtn').style.display = 'block';
-    inp.classList.add('ocr-active');
-    document.getElementById('ocrEditHint').style.display = 'flex';
-    inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    inp.focus();
+    if (newText.trim().length < 15) { showOCRFail(); return; }
+    applyOCRResult(newText, 'tesseract');
   }).catch(function(err) {
     console.error(err);
     showOCRFail();
+  });
+}
+
+function startOCR(srcCanvas) {
+  document.getElementById('cropArea').style.display = 'none';
+  document.getElementById('ocrFailPanel').style.display = 'none';
+  document.getElementById('ocrStatusArea').style.display = 'block';
+  setOcrStatus('🧠 AI OCR 분석 중...', 20, 'var(--primary)');
+
+  // Clova OCR 시도 (Pages Function /ocr)
+  var base64 = srcCanvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+  var timer = setTimeout(function() {
+    // 15초 초과 시 Tesseract로 전환
+    console.warn('Clova timeout — falling back to Tesseract');
+    runTesseract(srcCanvas);
+  }, 15000);
+
+  fetch('/ocr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: base64, format: 'jpg' }),
+  }).then(function(res) {
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }).then(function(data) {
+    if (data.error === 'OCR_NOT_CONFIGURED') throw new Error('not_configured');
+    var newText = cleanOCRText(data.text || '');
+    if (newText.trim().length < 10) throw new Error('too_short');
+    applyOCRResult(newText, 'clova');
+  }).catch(function(err) {
+    clearTimeout(timer);
+    if (err.message === 'not_configured') {
+      // 환경변수 미설정 → 조용히 Tesseract로
+    } else {
+      console.warn('Clova OCR 실패, Tesseract로 전환:', err.message);
+    }
+    runTesseract(srcCanvas);
   });
 }
 
