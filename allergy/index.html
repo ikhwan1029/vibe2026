@@ -331,6 +331,13 @@
     }
     .guide-text { font-size: 13px; color: #0c4a6e; line-height: 1.4; padding-top: 2px; }
     .guide-text strong { font-weight: 800; }
+    .btn-guide-dismiss {
+      margin-top: 12px; width: 100%; padding: 7px;
+      border: none; background: none;
+      font-size: 12px; color: #64748b; cursor: pointer;
+      font-family: inherit; text-decoration: underline;
+      text-underline-offset: 2px;
+    }
 
     /* ── 위험 결과 강화 ── */
     .result-box.danger .result-icon { font-size: 56px; }
@@ -469,6 +476,7 @@
           <div class="guide-text"><strong>위험 성분을 바로 확인</strong>하세요<br>안전·주의·위험 3단계로 알려드려요</div>
         </div>
       </div>
+      <button class="btn-guide-dismiss" onclick="dismissGuideForDay()">하루동안 보지 않기</button>
     </div>
 
     <div class="card">
@@ -802,13 +810,19 @@ function togglePreset(p) {
   renderPresets(); renderTags();
 }
 
+function dismissGuideForDay() {
+  sv('ac_guide_hidden_until', Date.now() + 86400000);
+  document.getElementById('guideCard').style.display = 'none';
+}
+
 function renderTags() {
   var row = document.getElementById('myTagsRow');
   var msg = document.getElementById('emptyAllergenMsg');
   var guide = document.getElementById('guideCard');
+  var hiddenUntil = ld('ac_guide_hidden_until', 0);
   row.innerHTML = '';
   msg.style.display = myA.length === 0 ? 'block' : 'none';
-  if (guide) guide.style.display = myA.length === 0 ? 'block' : 'none';
+  if (guide) guide.style.display = (myA.length === 0 && Date.now() >= hiddenUntil) ? 'block' : 'none';
   myA.forEach(function(a) {
     var t = document.createElement('div');
     t.className = 'a-tag';
