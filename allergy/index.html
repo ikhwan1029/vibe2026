@@ -236,6 +236,19 @@
       font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
     }
 
+    /* ── OCR 편집 힌트 ── */
+    .ocr-edit-hint {
+      font-size: 12px; font-weight: 600; color: #0284c7;
+      padding: 7px 12px; background: #f0f9ff;
+      border: 1.5px solid #7dd3fc; border-top: none;
+      border-radius: 0 0 12px 12px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    textarea.ocr-active {
+      border-color: var(--primary) !important;
+      border-radius: 12px 12px 0 0 !important;
+    }
+
     .or-row {
       display: flex; align-items: center; gap: 8px;
       color: var(--muted); font-size: 12px; font-weight: 600;
@@ -482,7 +495,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.15</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.19</span>
 </div>
 
 <div class="content">
@@ -598,6 +611,9 @@
         <button class="btn btn-sm" onclick="cleanIngInput()" style="font-size:12px;padding:5px 11px;color:var(--muted);">✨ 텍스트 정리</button>
       </div>
       <textarea id="ingInput" placeholder="식품 포장지의 원재료명을 여기에 붙여넣어 주세요.&#10;&#10;예) 밀가루, 설탕, 전지분유, 대두유, 계란, 코코아분말, 식품첨가물..."></textarea>
+      <div id="ocrEditHint" class="ocr-edit-hint" style="display:none">
+        ✏️ 잘못 인식된 글자가 있으면 직접 수정한 뒤 성분 확인하기를 눌러주세요
+      </div>
       <button class="btn btn-primary btn-full" onclick="doCheck()">🔍 성분 확인하기</button>
     </div>
 
@@ -1018,6 +1034,15 @@ function cleanIngInput() {
   setTimeout(function() { el.style.borderColor = ''; }, 800);
 }
 
+function clearOcrEditMode() {
+  var inp  = document.getElementById('ingInput');
+  var hint = document.getElementById('ocrEditHint');
+  inp.classList.remove('ocr-active');
+  if (hint) hint.style.display = 'none';
+}
+
+document.getElementById('ingInput').addEventListener('input', clearOcrEditMode);
+
 document.getElementById('ingInput').addEventListener('paste', function(e) {
   e.preventDefault();
   var raw = (e.clipboardData || window.clipboardData).getData('text');
@@ -1058,6 +1083,7 @@ function doCheck() {
     }
   });
 
+  clearOcrEditMode();
   var level = dangerHits.length > 0 ? 'danger' : warnHits.length > 0 ? 'warn' : 'safe';
   autoSaveRecord(txt, level, dangerHits.concat(warnHits));
   renderResult(txt, level, dangerHits, warnHits, allTriggers);
@@ -1530,9 +1556,12 @@ function startOCR(srcCanvas) {
       inp.value = newText;
     }
     _appendMode = false;
-    setOcrStatus('✅ 인식 완료! 내용을 확인 후 성분 확인하기를 눌러주세요.', 100, 'var(--safe)');
+    setOcrStatus('✅ 인식 완료!', 100, 'var(--safe)');
     document.getElementById('addMoreBtn').style.display = 'block';
+    inp.classList.add('ocr-active');
+    document.getElementById('ocrEditHint').style.display = 'flex';
     inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    inp.focus();
   }).catch(function(err) {
     console.error(err);
     setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
