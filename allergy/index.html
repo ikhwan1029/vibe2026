@@ -809,7 +809,7 @@
     <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
     <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
   </div>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.36</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.37</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -1957,8 +1957,10 @@ function loadImageFile(blob) {
   document.getElementById('ocrFailPanel').style.display = 'none';
   document.getElementById('addMoreBtn').style.display = 'none';
 
-  document.querySelector('.crop-hint').textContent =
-    _appendMode ? '📌 이어지는 부분을 드래그해서 선택하세요' : '📌 성분표 부분을 손가락으로 드래그해서 선택하세요';
+  var cropOrDrag = document.querySelector('.crop-or-drag');
+  if (cropOrDrag) cropOrDrag.textContent = _appendMode
+    ? '✏️ 또는 이어지는 부분을 드래그로 선택'
+    : '✏️ 또는 이미지에서 직접 드래그로 선택';
 
   _cCanvas = document.getElementById('cropCanvas');
   _cCtx    = _cCanvas.getContext('2d');
