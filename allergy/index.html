@@ -676,44 +676,103 @@ function openCamera() {
   document.getElementById('cameraInput').click();
 }
 
+// 이미지 전처리: 그레이스케일 + 대비 강화 → OCR 정확도 향상
+function preprocessForOCR(file, cb) {
+  var img = new Image();
+  var url = URL.createObjectURL(file);
+  img.onload = function() {
+    var maxSide = Math.max(img.width, img.height);
+    var scale   = maxSide < 1600 ? Math.min(3, 1600 / maxSide) : 1;
+    var canvas  = document.createElement('canvas');
+    canvas.width  = Math.round(img.width  * scale);
+    canvas.height = Math.round(img.height * scale);
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    var id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var d  = id.data;
+    for (var i = 0; i < d.length; i += 4) {
+      // 그레이스케일
+      var g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+      // 대비 1.7배 강화
+      g = Math.min(255, Math.max(0, (g - 128) * 1.7 + 128));
+      d[i] = d[i+1] = d[i+2] = g;
+    }
+    ctx.putImageData(id, 0, 0);
+    URL.revokeObjectURL(url);
+    cb(canvas);
+  };
+  img.src = url;
+}
+
+// OCR 결과 정제: 노이즈 줄바꿈 제거, 이상한 기호 정리
+function cleanOCRText(raw) {
+  return raw
+    .replace(/\r/g, '')
+    // 각 줄을 다듬고 1글자짜리 노이즈 줄 제거
+    .split('\n')
+    .map(function(l) { return l.trim(); })
+    .filter(function(l) { return l.length >= 2; })
+    // 짧은 줄(3자 이하)은 앞 줄과 붙이기 (OCR이 단어 중간에 줄바꿈하는 경우)
+    .reduce(function(acc, line) {
+      if (acc.length === 0) { acc.push(line); return acc; }
+      var prev = acc[acc.length - 1];
+      // 이전 줄이 구두점으로 끝나거나 현재 줄이 충분히 길면 새 줄로
+      if (/[,，.。\)）]$/.test(prev) || line.length > 3) {
+        acc.push(line);
+      } else {
+        acc[acc.length - 1] = prev + line;
+      }
+      return acc;
+    }, [])
+    .join(' ')
+    // 불필요한 기호 정리 (| l 등 OCR 오인식)
+    .replace(/\|/g, '')
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
 document.getElementById('cameraInput').addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (!file) return;
-  e.target.value = '';  // reset so same file can be re-selected
+  e.target.value = '';
 
-  // Show preview
-  var url = URL.createObjectURL(file);
+  // 미리보기 표시
+  var previewUrl = URL.createObjectURL(file);
   var wrap = document.getElementById('ocrPreviewWrap');
-  document.getElementById('ocrImg').src = url;
+  document.getElementById('ocrImg').src = previewUrl;
   wrap.style.display = 'block';
-  setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 다운로드로 시간이 걸려요)', 0, 'var(--primary)');
-
-  // Scroll into view
   wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setOcrStatus('🖼️ 이미지 전처리 중...', 5, 'var(--primary)');
 
-  Tesseract.recognize(file, 'kor+eng', {
-    logger: function(m) {
-      if (m.status === 'loading tesseract core') {
-        setOcrStatus('📦 OCR 엔진 로딩 중...', 5, 'var(--primary)');
-      } else if (m.status === 'initializing tesseract') {
-        setOcrStatus('⚙️ OCR 초기화 중...', 15, 'var(--primary)');
-      } else if (m.status === 'loading language traineddata') {
-        setOcrStatus('📥 한국어 언어 데이터 로딩 중...', 30, 'var(--primary)');
-      } else if (m.status === 'initializing api') {
-        setOcrStatus('🔧 분석 준비 중...', 50, 'var(--primary)');
-      } else if (m.status === 'recognizing text') {
-        var pct = Math.round(50 + m.progress * 50);
-        setOcrStatus('🔍 텍스트 인식 중... ' + pct + '%', pct, 'var(--primary)');
+  // 이미지 전처리 후 OCR 실행
+  preprocessForOCR(file, function(canvas) {
+    setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 시간이 걸려요)', 10, 'var(--primary)');
+
+    Tesseract.recognize(canvas, 'kor+eng', {
+      logger: function(m) {
+        if (m.status === 'loading tesseract core') {
+          setOcrStatus('📦 OCR 엔진 로딩 중...', 15, 'var(--primary)');
+        } else if (m.status === 'initializing tesseract') {
+          setOcrStatus('⚙️ OCR 초기화 중...', 25, 'var(--primary)');
+        } else if (m.status === 'loading language traineddata') {
+          setOcrStatus('📥 한국어 데이터 로딩 중...', 35, 'var(--primary)');
+        } else if (m.status === 'initializing api') {
+          setOcrStatus('🔧 분석 준비 중...', 50, 'var(--primary)');
+        } else if (m.status === 'recognizing text') {
+          var pct = Math.round(50 + m.progress * 48);
+          setOcrStatus('🔍 텍스트 인식 중... ' + pct + '%', pct, 'var(--primary)');
+        }
       }
-    }
-  }).then(function(result) {
-    var text = result.data.text.trim();
-    document.getElementById('ingInput').value = text;
-    setOcrStatus('✅ 인식 완료! 아래 내용을 확인 후 성분 확인하기를 눌러주세요.', 100, 'var(--safe)');
-    document.getElementById('ingInput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }).catch(function(err) {
-    console.error(err);
-    setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
+    }).then(function(result) {
+      var cleaned = cleanOCRText(result.data.text);
+      document.getElementById('ingInput').value = cleaned;
+      setOcrStatus('✅ 인식 완료! 내용을 확인 후 성분 확인하기를 눌러주세요.', 100, 'var(--safe)');
+      document.getElementById('ingInput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }).catch(function(err) {
+      console.error(err);
+      setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
+    });
   });
 });
 
