@@ -574,6 +574,9 @@
 
       <div class="or-row">또는 직접 입력</div>
 
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button class="btn btn-sm" onclick="cleanIngInput()" style="font-size:12px;padding:5px 11px;color:var(--muted);">✨ 텍스트 정리</button>
+      </div>
       <textarea id="ingInput" placeholder="식품 포장지의 원재료명을 여기에 붙여넣어 주세요.&#10;&#10;예) 밀가루, 설탕, 전지분유, 대두유, 계란, 코코아분말, 식품첨가물..."></textarea>
       <button class="btn btn-primary btn-full" onclick="doCheck()">🔍 성분 확인하기</button>
     </div>
@@ -873,6 +876,36 @@ function addCustom() {
 
 document.getElementById('customInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') addCustom();
+});
+
+// ── 성분 텍스트 정리 ─────────────────────────────────────
+function normalizeIngText(raw) {
+  return raw
+    .replace(/[ ​‌‍﻿　]/g, ' ') // 특수 공백 → 일반 공백
+    .replace(/\t/g, ' ')               // 탭 → 공백
+    .replace(/\r\n|\r/g, '\n')         // 줄바꿈 통일
+    .replace(/[^\S\n]{2,}/g, ' ')      // 연속 공백(줄바꿈 제외) → 공백 1개
+    .split('\n')
+    .map(function(l) { return l.trim(); })
+    .filter(function(l) { return l.length > 0; })
+    .join(' ')                         // 줄바꿈 → 공백으로 합치기
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
+function cleanIngInput() {
+  var el = document.getElementById('ingInput');
+  var cleaned = normalizeIngText(el.value);
+  if (cleaned === el.value.trim()) return;
+  el.value = cleaned;
+  el.style.borderColor = 'var(--safe)';
+  setTimeout(function() { el.style.borderColor = ''; }, 800);
+}
+
+document.getElementById('ingInput').addEventListener('paste', function(e) {
+  e.preventDefault();
+  var raw = (e.clipboardData || window.clipboardData).getData('text');
+  this.value = normalizeIngText(raw);
 });
 
 // ══ Tab 2: Ingredient check ════════════════════════════════
