@@ -302,6 +302,46 @@
     }
     .empty-icon { font-size: 44px; margin-bottom: 8px; }
 
+    /* ── 온보딩 가이드 ── */
+    .guide-card {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 1.5px solid #7dd3fc; border-radius: 18px;
+      padding: 16px; margin-bottom: 12px;
+    }
+    .guide-card-title {
+      font-size: 13px; font-weight: 800; color: #0c4a6e; margin-bottom: 12px;
+    }
+    .guide-steps { display: flex; flex-direction: column; gap: 9px; }
+    .guide-step  { display: flex; align-items: flex-start; gap: 10px; }
+    .guide-num {
+      width: 22px; height: 22px; flex-shrink: 0;
+      background: var(--primary); color: #fff; border-radius: 50%;
+      font-size: 11px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .guide-text { font-size: 13px; color: #0c4a6e; line-height: 1.4; padding-top: 2px; }
+    .guide-text strong { font-weight: 800; }
+
+    /* ── 위험 결과 강화 ── */
+    .result-box.danger .result-icon { font-size: 56px; }
+    .result-box.danger .result-msg  { font-size: 21px; }
+    .danger-count {
+      font-size: 13px; font-weight: 700;
+      background: rgba(255,255,255,0.65); border-radius: 8px;
+      padding: 4px 12px; margin-bottom: 14px; display: inline-block;
+      color: #991b1b;
+    }
+    .hit-item.d-hit { border-left: 3px solid var(--danger); }
+    .hit-item.w-hit { border-left: 3px solid var(--warn); }
+
+    /* ── 의료 고지 ── */
+    .medical-note {
+      font-size: 12px; color: #64748b; line-height: 1.7;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 10px 13px; margin-top: 10px;
+    }
+    .medical-note strong { color: #dc2626; }
+
     /* ── Footer note ── */
     .foot-note { font-size: 11px; color: #94a3b8; text-align: center; padding: 8px 0 14px; }
 
@@ -402,6 +442,24 @@
   <!-- ════════════ TAB 1 : 내 알레르기 ════════════ -->
   <div class="tab-section active" id="tab-allergy">
 
+    <div id="guideCard" class="guide-card">
+      <div class="guide-card-title">👋 처음이신가요? 이렇게 사용해 보세요</div>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="guide-num">1</div>
+          <div class="guide-text"><strong>피해야 할 알레르기를 선택</strong>하세요<br>아래 목록에서 탭하거나 직접 추가할 수 있어요</div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-num">2</div>
+          <div class="guide-text"><strong>성분 확인 탭</strong>에서 성분표를 붙여넣거나<br>카메라로 촬영하세요</div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-num">3</div>
+          <div class="guide-text"><strong>위험 성분을 바로 확인</strong>하세요<br>안전·주의·위험 3단계로 알려드려요</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-title">⚠️ 자주 쓰는 알레르기 선택</div>
       <div class="chip-grid" id="presetGrid"></div>
@@ -424,6 +482,9 @@
     </div>
 
     <button class="btn-share" onclick="shareLink()">🔗 보호자에게 공유하기</button>
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:5px;line-height:1.5;">
+      내 알레르기 목록을 보호자·선생님에게 링크로 보내드릴 수 있어요
+    </p>
     <p class="foot-note">데이터는 이 기기에만 저장됩니다</p>
   </div>
 
@@ -524,14 +585,14 @@
 var ADATA = {
   '우유':     { l1:['우유','전지분유','탈지분유','분유','유단백','milk','밀크'],
                 l2:['유청','카제인','락토스','유당','lactose','casein','whey','dairy','버터','크림','치즈'] },
-  '계란':     { l1:['계란','달걀','난황','난백','egg','가금란'],
-                l2:['에그','난각','오보알부민'] },
-  '땅콩':     { l1:['땅콩','피넛','peanut','땅콩버터'],
-                l2:['아라키스','땅콩분','아라키스유'] },
+  '계란':     { l1:['계란','달걀','난황','난백','egg','가금란','난류','전란','전란분','알가공품'],
+                l2:['에그','난각','오보알부민','마요네즈','난황유','머랭'] },
+  '땅콩':     { l1:['땅콩','피넛','peanut','땅콩버터','groundnut'],
+                l2:['아라키스','땅콩분','아라키스유','땅콩기름'] },
   '밀':       { l1:['밀가루','소맥분','소맥','wheat','글루텐','gluten'],
-                l2:['밀','강력분','중력분','박력분','빵가루','세몰리나','durum'] },
-  '대두':     { l1:['대두','콩','두부','두유','soy','soya'],
-                l2:['된장','간장','대두단백','대두유','대두레시틴','레시틴','메주'] },
+                l2:['밀','강력분','중력분','박력분','빵가루','세몰리나','durum','통밀','스펠트','보리','귀리'] },
+  '대두':     { l1:['대두','콩','두부','두유','soy','soya','대두단백'],
+                l2:['된장','간장','대두유','대두레시틴','레시틴','메주','낫토','미소','에다마메','두장'] },
   '메밀':     { l1:['메밀','메밀가루','buckwheat'],
                 l2:['교맥','소바'] },
   '새우':     { l1:['새우','shrimp','prawn'],
@@ -729,8 +790,10 @@ function togglePreset(p) {
 function renderTags() {
   var row = document.getElementById('myTagsRow');
   var msg = document.getElementById('emptyAllergenMsg');
+  var guide = document.getElementById('guideCard');
   row.innerHTML = '';
   msg.style.display = myA.length === 0 ? 'block' : 'none';
+  if (guide) guide.style.display = myA.length === 0 ? 'block' : 'none';
   myA.forEach(function(a) {
     var t = document.createElement('div');
     t.className = 'a-tag';
@@ -796,9 +859,9 @@ function doCheck() {
 
 function renderResult(txt, level, dangerHits, warnHits, triggers) {
   var meta = {
-    safe:   { icon:'✅', lvl:'안전',      msg:'위험 성분이 검출되지 않았어요' },
-    warn:   { icon:'⚠️', lvl:'주의 필요', msg:'간접 관련 성분이 포함될 수 있어요' },
-    danger: { icon:'🚨', lvl:'위험',      msg:'알레르기 유발 성분이 포함되어 있어요!' },
+    safe:   { icon:'✅', lvl:'안전 가능성 높음', msg:'위험 성분이 검출되지 않았어요' },
+    warn:   { icon:'⚠️', lvl:'주의 필요',        msg:'간접 관련 성분이 포함될 수 있어요' },
+    danger: { icon:'🚨', lvl:'위험 성분 포함',   msg:'지금 당장 섭취를 피해 주세요!' },
   };
   var m = meta[level];
 
@@ -807,13 +870,24 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
   html += '<div class="result-level">' + m.lvl + '</div>';
   html += '<div class="result-msg">' + m.msg + '</div>';
 
+  if (level === 'danger' && dangerHits.length > 0) {
+    html += '<div class="danger-count">🔴 위험 알레르기 ' + dangerHits.length + '종 발견</div>';
+  }
+
   var allHits = dangerHits.concat(warnHits);
   if (allHits.length > 0) {
     html += '<div class="hit-list">';
-    allHits.forEach(function(h) {
-      html += '<div class="hit-item">';
-      html += '<div class="hit-allergen">' + esc(h.allergen) + '</div>';
-      html += '<div class="hit-found">감지: ';
+    dangerHits.forEach(function(h) {
+      html += '<div class="hit-item d-hit">';
+      html += '<div class="hit-allergen">🚨 ' + esc(h.allergen) + '</div>';
+      html += '<div class="hit-found">성분표에서 발견: ';
+      html += h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ');
+      html += '</div></div>';
+    });
+    warnHits.forEach(function(h) {
+      html += '<div class="hit-item w-hit">';
+      html += '<div class="hit-allergen">⚠️ ' + esc(h.allergen) + '</div>';
+      html += '<div class="hit-found">간접 성분 발견: ';
       html += h.found.map(function(f) { return '<mark>' + esc(f) + '</mark>'; }).join(' · ');
       html += '</div></div>';
     });
@@ -833,11 +907,10 @@ function renderResult(txt, level, dangerHits, warnHits, triggers) {
   html += '<div class="card"><div class="card-title">📄 성분표 원문 (위험 성분 표시)</div>';
   html += '<div class="ing-display">' + highlighted + '</div></div>';
 
-  if (level === 'safe') {
-    html += '<div class="safe-note">⚠️ 성분명이 다르게 표기될 수 있으니,<br>포장지 원문도 꼭 다시 확인해 주세요.</div>';
-  }
+  html += '<div class="medical-note">⚠️ <strong>이 서비스는 참고용입니다.</strong> 알레르기가 심한 경우 반드시 제품 포장지의 원재료명과 전문가 안내를 함께 확인하세요. 성분명 표기 방식에 따라 일부 성분이 감지되지 않을 수 있습니다.</div>';
 
   document.getElementById('resultArea').innerHTML = html;
+  document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ══ Tab 3: 기록 ════════════════════════════════════════════
