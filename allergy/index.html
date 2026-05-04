@@ -377,6 +377,20 @@
     /* ── Footer note ── */
     .foot-note { font-size: 11px; color: #94a3b8; text-align: center; padding: 8px 0 14px; }
 
+    /* ── 관련 성분 목록 ── */
+    .syns-row {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px; line-height: 1.6; flex-wrap: wrap;
+    }
+    .syns-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .syns-label {
+      flex-shrink: 0; font-weight: 800; font-size: 12px;
+      color: #991b1b; background: #fee2e2;
+      border-radius: 999px; padding: 2px 10px;
+    }
+    .syns-items { color: var(--muted); word-break: break-all; }
+
     /* ── 대체식품 탭 ── */
     .alt-allergen-label {
       display: inline-flex; align-items: center;
@@ -513,6 +527,11 @@
       <p id="emptyAllergenMsg" style="font-size:13px;color:#94a3b8;margin-top:10px;display:none;">
         아직 등록된 알레르기가 없어요
       </p>
+    </div>
+
+    <div class="card" id="synsCard" style="display:none">
+      <div class="card-title">🔍 이런 성분명을 검사해요</div>
+      <div id="synsList"></div>
     </div>
 
     <div id="shareSection">
@@ -849,6 +868,8 @@ function renderTags() {
   msg.style.display = myA.length === 0 ? 'block' : 'none';
   if (guide) guide.style.display = (myA.length === 0 && Date.now() >= hiddenUntil) ? 'block' : 'none';
 
+  renderSynsList();
+
   var shareBtn  = document.getElementById('shareBtn');
   var shareHint = document.getElementById('shareHint');
   if (shareBtn) {
@@ -865,6 +886,24 @@ function renderTags() {
     t.innerHTML = esc(a) + '<button onclick="removeA(\'' + esc(a) + '\')">×</button>';
     row.appendChild(t);
   });
+}
+
+function renderSynsList() {
+  var card = document.getElementById('synsCard');
+  var list = document.getElementById('synsList');
+  if (!card || !list) return;
+  if (myA.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  var html = '';
+  myA.forEach(function(a) {
+    var d = ADATA[a];
+    var all = d ? d.l1.concat(d.l2) : [a];
+    html += '<div class="syns-row">';
+    html += '<span class="syns-label">' + esc(a) + '</span>';
+    html += '<span class="syns-items">' + all.map(esc).join(', ') + '</span>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
 }
 
 function removeA(a) {
