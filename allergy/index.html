@@ -458,9 +458,9 @@
 
     /* ── 관련 성분 목록 ── */
     .syns-row {
-      display: flex; align-items: baseline; gap: 8px;
-      padding: 8px 0; border-bottom: 1px solid var(--border);
-      font-size: 13px; line-height: 1.6; flex-wrap: wrap;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px; line-height: 1.6;
     }
     .syns-row:last-child { border-bottom: none; padding-bottom: 0; }
     .syns-label {
@@ -468,6 +468,29 @@
       color: #991b1b; background: #fee2e2;
       border-radius: 999px; padding: 2px 10px;
     }
+    .syns-section { width: 100%; }
+    .syns-section-hd {
+      font-size: 10px; font-weight: 800; color: #94a3b8;
+      letter-spacing: 0.4px; text-transform: uppercase;
+      margin: 4px 0 5px;
+    }
+    .syns-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .syns-chip-l1 {
+      background: #fee2e2; color: #991b1b;
+      border-radius: 6px; padding: 2px 8px;
+      font-size: 12px; font-weight: 700;
+    }
+    .syns-chip-l2 {
+      background: #fff7ed; color: #c2410c;
+      border: 1px solid #fed7aa;
+      border-radius: 6px; padding: 2px 8px;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .syns-food-row {
+      display: flex; align-items: baseline; gap: 7px;
+      margin-top: 6px; flex-wrap: wrap;
+    }
+    .syns-food-why { font-size: 11px; color: var(--muted); line-height: 1.5; }
     .syns-items { color: var(--muted); word-break: break-all; }
 
     /* ── 대체식품 탭 ── */
@@ -810,7 +833,7 @@
     <button class="pc-nav-btn" id="pcbtn-memo" onclick="goTab('memo')">📋 기록</button>
     <button class="pc-nav-btn" id="pcbtn-alt" onclick="goTab('alt')">🌿 대체식품</button>
   </div>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.40</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.41</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -860,7 +883,7 @@
     </div>
 
     <div class="card" id="synsCard" style="display:none">
-      <div class="card-title">🔍 이런 성분명을 검사해요</div>
+      <div class="card-title">🔍 성분표에서 이렇게 숨어있어요</div>
       <div id="synsList"></div>
     </div>
 
@@ -1396,10 +1419,28 @@ function renderSynsList() {
   var html = '';
   myA.forEach(function(a) {
     var d = ADATA[a];
-    var all = d ? d.l1.concat(d.l2) : [a];
     html += '<div class="syns-row">';
     html += '<span class="syns-label">' + esc(a) + '</span>';
-    html += '<span class="syns-items">' + all.map(esc).join(', ') + '</span>';
+    if (d) {
+      html += '<div class="syns-section">';
+      html += '<div class="syns-section-hd">직접 성분명</div>';
+      html += '<div class="syns-chips">';
+      d.l1.forEach(function(t) { html += '<span class="syns-chip-l1">' + esc(t) + '</span>'; });
+      html += '</div>';
+      if (d.l2.length > 0) {
+        html += '<div class="syns-section-hd" style="margin-top:10px">숨겨진 이름 · 관련 식품</div>';
+        d.l2.forEach(function(t) {
+          var reason = REASON[t] || REASON[t.toLowerCase()];
+          html += '<div class="syns-food-row">';
+          html += '<span class="syns-chip-l2">' + esc(t) + '</span>';
+          if (reason) html += '<span class="syns-food-why">' + esc(reason) + '</span>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+    } else {
+      html += '<span class="syns-items">' + esc(a) + '</span>';
+    }
     html += '</div>';
   });
   list.innerHTML = html;
