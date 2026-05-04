@@ -218,6 +218,13 @@
       overflow: hidden; margin-bottom: 4px;
     }
 
+    .btn-add-more {
+      width: 100%; margin-top: 10px; padding: 10px;
+      border: 2px dashed #7dd3fc; border-radius: 10px;
+      background: #f0f9ff; color: #0284c7;
+      font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+
     .or-row {
       display: flex; align-items: center; gap: 8px;
       color: var(--muted); font-size: 12px; font-weight: 600;
@@ -375,6 +382,9 @@
         <div id="ocrStatusArea" class="ocr-status-bar" style="display:none">
           <div id="ocrStatusText" class="ocr-status-text">준비 중...</div>
           <div class="ocr-bar-bg"><div id="ocrBarFill" class="ocr-bar-fill"></div></div>
+          <button id="addMoreBtn" class="btn-add-more" onclick="addMorePhoto()" style="display:none">
+            📷 이어서 더 찍기 <span style="font-size:11px;opacity:0.7">(성분표가 긴 경우)</span>
+          </button>
         </div>
 
       </div>
@@ -697,7 +707,17 @@ function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
 // ══ Camera / OCR ══════════════════════════════════════════
 // ══ Camera ════════════════════════════════════════════════
-function openCamera() { document.getElementById('cameraInput').click(); }
+var _appendMode = false;
+
+function openCamera() {
+  _appendMode = false;
+  document.getElementById('cameraInput').click();
+}
+
+function addMorePhoto() {
+  _appendMode = true;
+  document.getElementById('cameraInput').click();
+}
 
 // ══ Crop tool state ════════════════════════════════════════
 var _cImg = null;      // full-res Image object
@@ -717,7 +737,11 @@ document.getElementById('cameraInput').addEventListener('change', function(e) {
   wrap.style.display = 'block';
   document.getElementById('cropArea').style.display = 'block';
   document.getElementById('ocrStatusArea').style.display = 'none';
+  document.getElementById('addMoreBtn').style.display = 'none';
   wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // append 모드면 크롭 힌트 업데이트
+  document.querySelector('.crop-hint').textContent =
+    _appendMode ? '📌 이어지는 부분을 드래그해서 선택하세요' : '📌 성분표 부분을 손가락으로 드래그해서 선택하세요';
 
   _cCanvas = document.getElementById('cropCanvas');
   _cCtx    = _cCanvas.getContext('2d');
@@ -859,9 +883,17 @@ function startOCR(srcCanvas) {
       }
     }
   }).then(function(result) {
-    document.getElementById('ingInput').value = cleanOCRText(result.data.text);
+    var newText = cleanOCRText(result.data.text);
+    var inp = document.getElementById('ingInput');
+    if (_appendMode && inp.value.trim()) {
+      inp.value = inp.value.trim() + ' ' + newText;
+    } else {
+      inp.value = newText;
+    }
+    _appendMode = false;
     setOcrStatus('✅ 인식 완료! 내용을 확인 후 성분 확인하기를 눌러주세요.', 100, 'var(--safe)');
-    document.getElementById('ingInput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('addMoreBtn').style.display = 'block';
+    inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }).catch(function(err) {
     console.error(err);
     setOcrStatus('❌ 인식 실패. 사진을 다시 찍거나 직접 입력해 주세요.', 100, 'var(--danger)');
