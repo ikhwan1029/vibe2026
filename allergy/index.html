@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>알레르기 체크</title>
-  <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -684,7 +684,7 @@
 <div class="header">
   <h1>🔍 알레르기 성분 체크</h1>
   <p>성분표를 붙여넣으면 위험 성분을 바로 찾아드려요</p>
-  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.32</span>
+  <span style="position:absolute;top:14px;right:16px;font-size:11px;font-weight:700;opacity:0.65;letter-spacing:0.3px;">v1.33</span>
   <button class="easy-toggle" id="easyToggleBtn" onclick="toggleEasyMode()">🔡 쉬운 화면</button>
 </div>
 
@@ -1996,6 +1996,9 @@ function startOCR(srcCanvas) {
   var langStr = ocrLangs.length > 0 ? ocrLangs.join('+') : 'kor';
   setOcrStatus('📦 OCR 엔진 로딩 중... (처음엔 시간이 걸려요)', 10, 'var(--primary)');
   Tesseract.recognize(canvas, langStr, {
+    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
+    corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core.wasm.js',
+    langPath:   'https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0',
     logger: function(m) {
       if      (m.status === 'loading tesseract core')       setOcrStatus('📦 OCR 엔진 로딩 중...', 15, 'var(--primary)');
       else if (m.status === 'initializing tesseract')       setOcrStatus('⚙️ OCR 초기화 중...', 25, 'var(--primary)');
