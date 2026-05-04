@@ -182,6 +182,16 @@
     .ing-display mark.hl { background: #fca5a5; border-radius: 3px; padding: 1px 2px; font-weight: 700; }
 
     /* ── Camera / OCR ── */
+    .btn-paste {
+      width: 100%; padding: 13px 12px; margin-bottom: 4px;
+      border: 2px dashed #a5b4fc; border-radius: 14px;
+      background: #f5f3ff; color: #6366f1;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: inherit; transition: background 0.13s;
+    }
+    .btn-paste:active { background: #ede9fe; }
+
     .btn-camera {
       width: 100%; padding: 15px 12px; margin-bottom: 4px;
       border: 2px dashed #7dd3fc; border-radius: 14px;
@@ -503,6 +513,10 @@
       <button class="btn-camera" onclick="openCamera()">
         📷 카메라로 성분표 스캔하기
       </button>
+      <button class="btn-paste" onclick="document.getElementById('pasteInput').click()">
+        📋 이미지 붙여넣기 <span style="font-size:11px;opacity:0.7">(Ctrl+V · 스크린샷)</span>
+      </button>
+      <input type="file" id="pasteInput" accept="image/*" style="display:none" />
 
       <!-- OCR wrap -->
       <div id="ocrPreviewWrap" class="ocr-wrap" style="display:none">
@@ -1088,28 +1102,23 @@ var _cStart = { x: 0, y: 0 };
 var _cCanvas = null;
 var _cCtx = null;
 
-document.getElementById('cameraInput').addEventListener('change', function(e) {
-  var file = e.target.files[0];
-  if (!file) return;
-  e.target.value = '';
-
+function loadImageFile(blob) {
+  goTab('check');
   var wrap = document.getElementById('ocrPreviewWrap');
   wrap.style.display = 'block';
   document.getElementById('cropArea').style.display = 'block';
   document.getElementById('ocrStatusArea').style.display = 'none';
   document.getElementById('addMoreBtn').style.display = 'none';
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  // append 모드면 크롭 힌트 업데이트
+
   document.querySelector('.crop-hint').textContent =
     _appendMode ? '📌 이어지는 부분을 드래그해서 선택하세요' : '📌 성분표 부분을 손가락으로 드래그해서 선택하세요';
 
   _cCanvas = document.getElementById('cropCanvas');
   _cCtx    = _cCanvas.getContext('2d');
   _cImg    = new Image();
-  var url  = URL.createObjectURL(file);
+  var url  = URL.createObjectURL(blob);
 
   _cImg.onload = function() {
-    // Scale image to fit card width (max 440px wide, 300px tall)
     var maxW = Math.min(wrap.offsetWidth || 400, 440);
     var maxH = 320;
     _cScale = Math.min(maxW / _cImg.width, maxH / _cImg.height);
@@ -1118,18 +1127,47 @@ document.getElementById('cameraInput').addEventListener('change', function(e) {
     _cRect = null;
     drawCrop();
     URL.revokeObjectURL(url);
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
   _cImg.src = url;
 
-  // Mouse events
   _cCanvas.onmousedown = function(e) { cropDragStart(canvasPos(e)); };
   _cCanvas.onmousemove = function(e) { if (_cDrag) { cropDragMove(canvasPos(e)); } };
   _cCanvas.onmouseup   = function()  { cropDragEnd(); };
 
-  // Touch events
   _cCanvas.ontouchstart = function(e) { e.preventDefault(); cropDragStart(canvasPos(e.touches[0])); };
   _cCanvas.ontouchmove  = function(e) { e.preventDefault(); if (_cDrag) cropDragMove(canvasPos(e.touches[0])); };
   _cCanvas.ontouchend   = function(e) { e.preventDefault(); cropDragEnd(); };
+}
+
+document.getElementById('cameraInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  loadImageFile(file);
+});
+
+document.getElementById('pasteInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  _appendMode = false;
+  loadImageFile(file);
+});
+
+document.addEventListener('paste', function(e) {
+  var items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.startsWith('image/')) {
+      e.preventDefault();
+      var blob = items[i].getAsFile();
+      if (!blob) return;
+      _appendMode = false;
+      loadImageFile(blob);
+      break;
+    }
+  }
 });
 
 function canvasPos(e) {
