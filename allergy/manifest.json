@@ -1,0 +1,30 @@
+{
+  "name": "먹어도 될까?",
+  "short_name": "먹어도될까",
+  "description": "음식 사진으로 알레르기를 빠르게 확인하는 앱",
+  "start_url": "/allergy/",
+  "scope": "/allergy/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/allergy/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/allergy/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/allergy/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
