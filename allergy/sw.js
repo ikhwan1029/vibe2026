@@ -2,7 +2,7 @@
 // (1) 캐시 — stale-while-revalidate 로 PWA 설치 자격 충족
 // (2) Web Push — 그룹 가입 등 알림 수신
 
-const CACHE = 'allergy-cache-v1';
+const CACHE = 'allergy-cache-v2';
 const SCOPE = '/allergy/';
 
 self.addEventListener('install', (event) => {
@@ -34,10 +34,24 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== location.origin) return;
   if (!url.pathname.startsWith(SCOPE)) return;
 
-  // stale-while-revalidate
+  // HTML 네비게이션: network-first (코드 갱신 즉시 반영) + 오프라인 시 캐시 fallback
+  // 그 외 정적 자산: stale-while-revalidate (빠른 표시 + 백그라운드 갱신)
+  const isNavigation = req.mode === 'navigate' || req.destination === 'document';
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE);
+      if (isNavigation) {
+        try {
+          const fresh = await fetch(req);
+          if (fresh && fresh.ok && fresh.type === 'basic') {
+            cache.put(req, fresh.clone()).catch(() => {});
+          }
+          return fresh;
+        } catch (_) {
+          const cached = await cache.match(req);
+          return cached || Response.error();
+        }
+      }
       const cached = await cache.match(req);
       const networkPromise = fetch(req)
         .then((res) => {
