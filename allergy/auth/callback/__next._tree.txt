@@ -1,3 +1,3 @@
-:HL["/allergy/_next/static/chunks/0d5.m.o8.~owd.css","style"]
+:HL["/allergy/_next/static/chunks/0jv7z8fkmn7lt.css","style"]
 :HL["/allergy/_next/static/media/cc583eb9dbc7f1b6-s.p.0o.bf1s9-kr-d.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"auth","param":null,"prefetchHints":0,"slots":{"children":{"name":"callback","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"UVrBV47V-lSq4bKhpwrwM"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"auth","param":null,"prefetchHints":0,"slots":{"children":{"name":"callback","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"QoGke-n47ql6tRhiKDM8w"}
