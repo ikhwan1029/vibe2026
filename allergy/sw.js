@@ -2,7 +2,7 @@
 // (1) 캐시 — stale-while-revalidate 로 PWA 설치 자격 충족
 // (2) Web Push — 그룹 가입 등 알림 수신
 
-const CACHE = 'allergy-cache-v3';
+const CACHE = 'allergy-cache-v4';
 const SCOPE = '/allergy/';
 
 self.addEventListener('install', (event) => {
