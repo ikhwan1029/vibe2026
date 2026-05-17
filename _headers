@@ -6,3 +6,6 @@
 
 /
   Cache-Control: no-cache, no-store, must-revalidate
+
+/allergy/_next/static/chunks/*
+  Cache-Control: no-store, no-cache, must-revalidate
